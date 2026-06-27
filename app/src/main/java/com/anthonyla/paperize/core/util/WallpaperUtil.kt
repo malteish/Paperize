@@ -160,11 +160,19 @@ fun getDeviceScreenSize(context: Context): Size {
  * LOCK screen wallpapers are not parallax-scrolled, so the physical screen size is correct.
  * LIVE wallpapers are rendered by GLRenderer directly; they do not go through this path.
  */
-fun getWallpaperRenderSize(context: Context, screenType: com.anthonyla.paperize.core.ScreenType): Size {
+fun getWallpaperRenderSize(
+    context: Context,
+    screenType: com.anthonyla.paperize.core.ScreenType,
+    homeScrollingEnabled: Boolean = true
+): Size {
     val screen = getDeviceScreenSize(context)
     return when (screenType) {
         com.anthonyla.paperize.core.ScreenType.HOME,
         com.anthonyla.paperize.core.ScreenType.BOTH -> {
+            // When scrolling is disabled, render at the physical screen size so the image is a
+            // single-screen center-crop. applyHomeScrollPreference() collapses the launcher canvas
+            // to match, so the bitmap is shown 1:1 (no upscaling) and identically on every page.
+            if (!homeScrollingEnabled) return screen
             val wm = WallpaperManager.getInstance(context)
             val desiredW = wm.desiredMinimumWidth
             val desiredH = wm.desiredMinimumHeight
@@ -173,6 +181,33 @@ fun getWallpaperRenderSize(context: Context, screenType: com.anthonyla.paperize.
             if (desiredW > 0 && desiredH > 0) Size(desiredW, desiredH) else screen
         }
         else -> screen
+    }
+}
+
+/**
+ * Tell [WallpaperManager] what canvas size to expect for HOME/BOTH wallpapers, so it matches the
+ * size produced by [getWallpaperRenderSize] before the bitmap is applied.
+ *
+ * - Scrolling disabled: suggest the physical screen size so the launcher shows one static page
+ *   (most launchers honor this; some OEM launchers may still parallax-scroll).
+ * - Scrolling enabled: suggest (0, 0) to hand the decision back to the launcher's default.
+ *
+ * No-op for LOCK/LIVE, which are never parallax-scrolled through this path.
+ */
+fun applyHomeScrollPreference(
+    context: Context,
+    screenType: com.anthonyla.paperize.core.ScreenType,
+    homeScrollingEnabled: Boolean
+) {
+    if (screenType != com.anthonyla.paperize.core.ScreenType.HOME &&
+        screenType != com.anthonyla.paperize.core.ScreenType.BOTH
+    ) return
+    val wm = WallpaperManager.getInstance(context)
+    if (homeScrollingEnabled) {
+        wm.suggestDesiredDimensions(0, 0)
+    } else {
+        val screen = getDeviceScreenSize(context)
+        wm.suggestDesiredDimensions(screen.width, screen.height)
     }
 }
 
