@@ -56,9 +56,8 @@ class ChangeWallpaperUseCase @Inject constructor(
             var maxRetries = Constants.MAX_WALLPAPER_LOAD_RETRIES
             var queueRebuildAttempts = 0
 
-            // Get render dimensions once for the retry loop.
-            // HOME/BOTH use the launcher's desired parallax canvas (unless the user disabled
-            // home-screen scrolling); LOCK uses physical screen.
+            // Get render dimensions once for the retry loop. HOME/BOTH use a screen-derived
+            // parallax canvas (or single screen when scrolling is disabled); LOCK uses physical screen.
             applyHomeScrollPreference(context, screenType, settings.homeScrollingEnabled)
             val screenSize = getWallpaperRenderSize(context, screenType, settings.homeScrollingEnabled)
             val effects = when (screenType) {
@@ -71,6 +70,11 @@ class ChangeWallpaperUseCase @Inject constructor(
                 ScreenType.HOME, ScreenType.BOTH -> settings.homeScalingType
                 ScreenType.LOCK -> settings.lockScalingType
             }
+            android.util.Log.d(
+                "ChangeWallpaperUseCase",
+                "render screen=$screenType scrolling=${settings.homeScrollingEnabled} " +
+                    "renderSize=${screenSize.width}x${screenSize.height} scaling=$scaling"
+            )
 
             while (finalBitmap == null && maxRetries > 0) {
                 val candidate = wallpaperRepository.getAndDequeueWallpaper(albumId, screenType)
