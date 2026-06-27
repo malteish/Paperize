@@ -202,12 +202,17 @@ fun applyHomeScrollPreference(
     if (screenType != com.anthonyla.paperize.core.ScreenType.HOME &&
         screenType != com.anthonyla.paperize.core.ScreenType.BOTH
     ) return
-    val wm = WallpaperManager.getInstance(context)
-    if (homeScrollingEnabled) {
-        wm.suggestDesiredDimensions(0, 0)
-    } else {
-        val screen = getDeviceScreenSize(context)
-        wm.suggestDesiredDimensions(screen.width, screen.height)
+    // Best-effort hint: never let a failure here abort the actual wallpaper change.
+    try {
+        val wm = WallpaperManager.getInstance(context)
+        if (homeScrollingEnabled) {
+            wm.suggestDesiredDimensions(0, 0)
+        } else {
+            val screen = getDeviceScreenSize(context)
+            wm.suggestDesiredDimensions(screen.width, screen.height)
+        }
+    } catch (e: Exception) {
+        android.util.Log.w("WallpaperUtil", "suggestDesiredDimensions failed; continuing without scroll hint", e)
     }
 }
 
