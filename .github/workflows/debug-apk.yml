@@ -1,0 +1,38 @@
+# Builds an unsigned debug APK and uploads it as a downloadable artifact.
+# No signing secrets required (uses the auto-generated debug keystore) and no
+# unit-test gate, so it works on a fork without access to the release secrets.
+# Trigger: push to this branch, or manually via the Actions tab (workflow_dispatch).
+name: Build Debug APK
+
+on:
+  push:
+    branches: [ "ci/debug-apk" ]
+  workflow_dispatch:
+
+jobs:
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository source code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: paperize-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
