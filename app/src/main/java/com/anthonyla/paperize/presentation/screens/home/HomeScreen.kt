@@ -52,6 +52,8 @@ fun HomeScreen(
     val appSettings by viewModel.appSettings.collectAsStateWithLifecycle()
     val wallpaperMode by viewModel.wallpaperMode.collectAsStateWithLifecycle()
     val showLiveWallpaperPrompt by viewModel.showLiveWallpaperPrompt.collectAsStateWithLifecycle()
+    val currentHomeWallpaperUri by viewModel.currentHomeWallpaperUri.collectAsStateWithLifecycle()
+    val currentLockWallpaperUri by viewModel.currentLockWallpaperUri.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -123,7 +125,9 @@ fun HomeScreen(
                                     onSelectLiveAlbum = { album -> viewModel.selectLiveAlbum(album) },
                                     onUpdateScheduleSettings = { viewModel.updateScheduleSettings(it) },
                                     onUpdateScheduleSettingsDebounced = { viewModel.updateScheduleSettingsDebounced(it) },
-                                    onChangeWallpaperNow = { viewModel.changeWallpaperNowForActiveScreens() }
+                                    onChangeWallpaperNow = { viewModel.changeWallpaperNowForActiveScreens() },
+                                    homeWallpaperUri = currentHomeWallpaperUri,
+                                    lockWallpaperUri = currentLockWallpaperUri
                                 )
                             }
                         }

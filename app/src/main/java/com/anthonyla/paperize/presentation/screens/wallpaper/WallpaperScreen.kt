@@ -72,6 +72,8 @@ fun WallpaperScreen(
     onUpdateScheduleSettings: (ScheduleSettings) -> Unit,
     onUpdateScheduleSettingsDebounced: (ScheduleSettings) -> Unit,
     onChangeWallpaperNow: () -> Unit,
+    homeWallpaperUri: String?,
+    lockWallpaperUri: String?,
     modifier: Modifier = Modifier
 ) {
     var showAlbumSelectionSheet by rememberSaveable { mutableStateOf(false) }
@@ -554,7 +556,11 @@ fun WallpaperScreen(
 
         // Current Wallpaper Preview (Static Mode Only)
         if (wallpaperMode == WallpaperMode.STATIC) {
-            CurrentWallpaperPreview(animate = appSettings.animate)
+            CurrentWallpaperPreview(
+                homeWallpaperUri = homeWallpaperUri,
+                lockWallpaperUri = lockWallpaperUri,
+                animate = appSettings.animate
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = AppSpacing.small))
         }
 
