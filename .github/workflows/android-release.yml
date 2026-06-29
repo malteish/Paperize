@@ -110,6 +110,13 @@ jobs:
           fi
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
 
+      - name: Rename release APK
+        # Gradle outputs `app-release.apk`; rename it to the versioned `paperize-v*.apk`
+        # name that the artifact upload and the release job expect.
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk \
+             app/build/outputs/apk/release/paperize-${{ steps.get_version.outputs.VERSION_NAME }}.apk
+
       - name: Upload APK as a build artifact
         # Archives the generated APK with a dynamic, versioned name. This artifact is essential
         # for passing the APK file to the subsequent `release` job.
@@ -142,12 +149,12 @@ jobs:
           path: ./apk-artifact
           merge-multiple: true
 
-      - name: Create Draft Release
-        # Publishes a new release to GitHub. `draft: true` ensures the release is not made
-        # public until it has been manually reviewed and published.
+      - name: Create Release
+        # Publishes a new release to GitHub. `draft: false` publishes immediately so
+        # Obtainium (which cannot see draft releases) detects it without a manual step.
         uses: softprops/action-gh-release@v2
         with:
           files: ./apk-artifact/paperize-v*.apk
-          draft: true
+          draft: false
           generate_release_notes: true
 
