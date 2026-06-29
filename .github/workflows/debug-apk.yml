@@ -6,7 +6,7 @@ name: Build Debug APK
 
 on:
   push:
-    branches: [ "ci/debug-apk" ]
+    branches: [ "malteish-release" ]
   workflow_dispatch:
 
 jobs:
