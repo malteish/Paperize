@@ -13,6 +13,13 @@
 
 ---
 
+> [!NOTE]
+> **This is an unofficial fork** of [Anthonyy232/Paperize](https://github.com/Anthonyy232/Paperize) (GPL-3.0), maintained by [malteish](https://github.com/malteish).
+> It is published under its own package id `com.malteish.paperize` so it installs alongside — not over — the official app, and is signed with a different key.
+> For the official, supported app please use the [upstream releases](https://github.com/Anthonyy232/Paperize/releases) or [F-Droid](https://f-droid.org/en/packages/com.anthonyla.paperize/).
+
+---
+
 ## Features
 
 - **Dynamic Wallpaper Changer** — Set your wallpaper to change at specific time intervals

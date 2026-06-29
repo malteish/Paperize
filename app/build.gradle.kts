@@ -29,11 +29,14 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.anthonyla.paperize"
+        // Upstream package id by default; the fork overrides it via the `forkAppId`
+        // Gradle property (see gradle.properties). Feature branches cut from
+        // upstream/master therefore build as the original id and stay clean for PRs.
+        applicationId = (project.findProperty("forkAppId") as String?) ?: "com.anthonyla.paperize"
         minSdk = 31
         targetSdk = 36
-        versionCode = 50
-        versionName = "4.0.0"
+        versionCode = 51
+        versionName = "4.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
