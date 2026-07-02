@@ -52,8 +52,18 @@ Unit tests are **pure JVM** (JUnit + MockK, no instrumentation) under `app/src/t
 
 - `master` is kept **identical to `upstream/master`** (fast-forward only, never commit directly) — it's the clean base for PRs. The `upstream` remote is `Anthonyy232/Paperize`.
 - Feature work: branch a `feat/…`, `fix/…`, or `perf/…` topic branch **off `master`/`upstream/master`**, containing only the change (no version bumps, no CI/packaging). PR that branch to `Anthonyy232/Paperize`.
-- **`malteish-release`** is the fork's integration/distribution branch: upstream + all features + fork-only packaging commits (kept on top). To ship, merge the feature into it, bump **both** `versionCode` and `versionName` in `app/build.gradle.kts`, then tag.
+- **`malteish-release`** is the fork's integration/distribution branch: upstream + all features + fork-only packaging commits (kept on top). To ship, merge the feature into it (commit first), then run `scripts/release.sh <patch|minor|major|X.Y.Z>` — it bumps **both** `versionCode` and `versionName`, commits, tags, pushes, and watches CI (see below).
 
 ## Releases (Obtainium)
 
 CI: `.github/workflows/android-release.yml` runs on `master` pushes and `v*` tags. A pushed `vX.Y.Z` tag triggers: test → signed `assembleRelease` → rename APK to `paperize-v*.apk` → published GitHub Release (auto-marked "Latest"). Obtainium tracks the repo and installs the latest release's APK; because it pins the signing certificate, **every release must use the same keystore and a higher `versionCode`**, or updates won't install.
+
+**Cut a release with `scripts/release.sh`** (from a clean `malteish-release` tree):
+
+```bash
+scripts/release.sh patch        # 4.1.1 -> 4.1.2 (also: minor, major, or an explicit X.Y.Z)
+scripts/release.sh patch --dry-run   # preview the plan, change nothing
+scripts/release.sh patch --check     # run unit tests locally before tagging
+```
+
+It reads the current version, bumps `versionCode` (+1) and `versionName`, makes the `build: release vX.Y.Z` commit, tags, pushes branch + tag, then (with `gh`) watches the pipeline and prints the published release URL. It refuses to run on the wrong branch, on a dirty tree, or if the tag already exists.
