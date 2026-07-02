@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark-theme accent pairing (primary / on-primary in dark theme). -->
-    <color name="widget_button_background">@android:color/system_accent1_200</color>
-    <color name="widget_button_icon">@android:color/system_accent1_800</color>
+    <!-- Filled widget, dark theme: Paperize primary / on-primary color roles. -->
+    <color name="widget_container">#FFB3CA</color>
+    <color name="widget_on_container">#650033</color>
 </resources>

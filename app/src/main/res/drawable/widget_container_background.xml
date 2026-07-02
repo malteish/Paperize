@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material 3 filled widget container. Corner radius follows the launcher's widget
+     radius (system_app_widget_background_radius, API 31+); fill is the primary color
+     role, swapped for dark mode via values-night. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_container" />
+    <corners android:radius="@android:dimen/system_app_widget_background_radius" />
+</shape>
