@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-theme accent pairing (primary / on-primary in dark theme). -->
+    <color name="widget_button_background">@android:color/system_accent1_200</color>
+    <color name="widget_button_icon">@android:color/system_accent1_800</color>
+</resources>
