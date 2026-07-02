@@ -35,8 +35,8 @@ android {
         applicationId = (project.findProperty("forkAppId") as String?) ?: "com.anthonyla.paperize"
         minSdk = 31
         targetSdk = 36
-        versionCode = 52
-        versionName = "4.1.0"
+        versionCode = 53
+        versionName = "4.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
