@@ -19,3 +19,6 @@ local.properties
 /app/schemas
 .kotlin
 /.kotlin/sessions
+
+# Scratch space for local preview renders, throwaway artifacts, etc.
+/tmp/
