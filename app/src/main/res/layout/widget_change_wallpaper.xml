@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The icon is a fixed-size centred ImageView, NOT a root background: a background
+     stretches to the widget cell, which is rarely square, turning the circle into an
+     ellipse. 56dp matches the size launchers render app icons at. The root stays
+     match_parent so the whole cell remains the tap target. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_container_background">
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/widget_icon"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/ic_widget_paperize_p"
-        android:scaleType="fitCenter"
-        android:tint="@color/widget_on_container"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_widget_paperize"
         android:contentDescription="@string/change_wallpaper_now" />
 
 </FrameLayout>

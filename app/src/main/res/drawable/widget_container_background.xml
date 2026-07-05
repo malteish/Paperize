@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Material 3 filled widget container. Circular so the widget reads as a round app
-     icon (matching launcher icons); fill is the primary color role, swapped for dark
-     mode via values-night. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@color/widget_container" />
-</shape>

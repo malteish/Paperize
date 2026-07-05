@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Filled widget, light theme: Paperize primary / on-primary color roles. -->
-    <color name="widget_container">#B8336A</color>
-    <color name="widget_on_container">#FFFFFF</color>
-</resources>
