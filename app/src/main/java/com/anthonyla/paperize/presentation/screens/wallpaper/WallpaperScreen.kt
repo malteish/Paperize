@@ -70,6 +70,7 @@ fun WallpaperScreen(
     onSelectLiveAlbum: (AlbumSummary?) -> Unit,
     onUpdateScheduleSettings: (ScheduleSettings) -> Unit,
     onUpdateScheduleSettingsDebounced: (ScheduleSettings) -> Unit,
+    onOpenCurrentWallpaperInGallery: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showAlbumSelectionSheet by rememberSaveable { mutableStateOf(false) }
@@ -552,7 +553,12 @@ fun WallpaperScreen(
 
         // Current Wallpaper Preview (Static Mode Only)
         if (wallpaperMode == WallpaperMode.STATIC) {
-            CurrentWallpaperPreview(animate = appSettings.animate)
+            CurrentWallpaperPreview(
+                animate = appSettings.animate,
+                // The current wallpaper is tracked per selected album, so the
+                // gallery button is only useful when an album is selected
+                onOpenInGallery = if (hasAlbumSelected) onOpenCurrentWallpaperInGallery else null
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = AppSpacing.small))
         }
 

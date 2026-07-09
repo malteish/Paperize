@@ -126,6 +126,9 @@
   <string name="visual_effects">Visual Effects</string>
   <string name="interactive_effects">Interactive Effects</string>
   <string name="current_wallpapers">Current Wallpapers</string>
+  <string name="open_in_gallery">Open Current Wallpaper in Gallery</string>
+  <string name="no_current_wallpaper_to_open">No wallpaper has been set by Paperize yet</string>
+  <string name="no_app_to_open_image">No app found to open the image</string>
 
   <!-- Tab Titles -->
 
