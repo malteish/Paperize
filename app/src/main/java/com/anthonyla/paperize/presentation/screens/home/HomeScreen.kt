@@ -127,7 +127,8 @@ fun HomeScreen(
                                     onUpdateScheduleSettingsDebounced = { viewModel.updateScheduleSettingsDebounced(it) },
                                     onChangeWallpaperNow = { viewModel.changeWallpaperNowForActiveScreens() },
                                     homeWallpaperUri = currentHomeWallpaperUri,
-                                    lockWallpaperUri = currentLockWallpaperUri
+                                    lockWallpaperUri = currentLockWallpaperUri,
+                                    onOpenCurrentWallpaperInGallery = { viewModel.openCurrentWallpaperInGallery() }
                                 )
                             }
                         }
