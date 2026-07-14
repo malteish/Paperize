@@ -4,7 +4,7 @@ package com.anthonyla.paperize.domain.model
  * Domain model for App Settings (theme, preferences, etc.)
  */
 data class AppSettings(
-    val darkMode: Boolean? = null,  // null = system default, true = dark, false = light
+    val darkMode: Boolean? = true,  // true = dark (default), false = light, null = follow system
     val dynamicTheming: Boolean = false,
     val animate: Boolean = true,
     val firstLaunch: Boolean = true
