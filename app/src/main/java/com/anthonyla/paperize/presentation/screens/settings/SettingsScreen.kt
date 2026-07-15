@@ -169,7 +169,7 @@ fun SettingsScreen(
             SettingSwitchItem(
                 title = stringResource(R.string.dark_mode),
                 description = stringResource(R.string.easier_on_the_eyes),
-                checked = appSettings?.darkMode ?: false,
+                checked = appSettings?.darkMode ?: true,
                 onCheckedChange = { viewModel.updateDarkMode(it) }
             )
 

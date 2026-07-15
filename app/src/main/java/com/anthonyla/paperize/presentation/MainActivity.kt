@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
 
             PaperizeTheme(
-                darkMode = currentSettings?.darkMode ?: false,
+                darkMode = currentSettings?.darkMode ?: true,
                 dynamicTheming = currentSettings?.dynamicTheming ?: false
             ) {
                 Surface(

@@ -11,9 +11,17 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.anthonyla.paperize.core.constants.Constants
+import com.anthonyla.paperize.domain.repository.SettingsRepository
+import com.anthonyla.paperize.service.widget.PauseResumeWidgetProvider
 import com.anthonyla.paperize.service.worker.AlbumRefreshWorker
 import com.anthonyla.paperize.core.util.DataResetManager
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -28,6 +36,11 @@ class PaperizeApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun onCreate() {
         super.onCreate()
 
@@ -40,12 +53,30 @@ class PaperizeApplication : Application(), Configuration.Provider {
 
         // Trigger album refresh on app cold start to validate and update all albums
         refreshAlbumsOnStartup()
+
+        // Keep pause/resume widgets showing the real changer state
+        observeChangerStateForWidgets()
     }
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
+
+    /**
+     * The changer can be toggled from many places (settings UI, widget taps, workers that
+     * disable it when albums disappear), so instead of refreshing the widget from every
+     * caller, watch the single persisted setting. Any process start re-syncs stale widgets
+     * for free, and the refresh is a no-op while no widget is placed.
+     */
+    private fun observeChangerStateForWidgets() {
+        applicationScope.launch {
+            settingsRepository.getScheduleSettingsFlow()
+                .map { it.enableChanger }
+                .distinctUntilChanged()
+                .collect { PauseResumeWidgetProvider.requestRefresh(this@PaperizeApplication) }
+        }
+    }
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(

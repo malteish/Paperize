@@ -219,4 +219,9 @@
   <string name="optimizing">Optimizing (May delay changes)</string>
   <string name="reliability">Reliability</string>
 
+  <string name="widget_pause_resume_label">Pause/resume wallpaper</string>
+  <string name="widget_pause_resume_description">Tap to pause or resume automatic wallpaper changes</string>
+  <string name="pause_wallpaper_changes">Pause wallpaper changes</string>
+  <string name="resume_wallpaper_changes">Resume wallpaper changes</string>
+
 </resources>
