@@ -43,8 +43,10 @@ object Constants {
     const val DEFAULT_PARALLAX_INTENSITY = 50
     const val DEFAULT_GRAYSCALE_PERCENTAGE = 0
     const val MAX_EFFECT_PERCENTAGE = 100
-    // JPEG quality for handing wallpapers to WallpaperManager.setStream (see setWallpaperFast)
-    const val WALLPAPER_JPEG_QUALITY = 95
+    // Encoder effort for the lossless WebP handed to WallpaperManager.setStream (see
+    // setWallpaperFast). For WEBP_LOSSLESS the quality parameter selects speed vs size
+    // (0 = fastest, 100 = smallest); output pixels are identical either way.
+    const val WALLPAPER_WEBP_EFFORT = 10
     const val SLIDER_EFFECT_STEPS = 99
     const val DIALOG_MESSAGE_MAX_LINES = 10
     const val MIN_EFFECT_PERCENTAGE = 0

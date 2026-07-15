@@ -642,16 +642,17 @@ fun getAdaptiveBrightnessMultiplier(context: Context, brightness: Float): Float 
  *
  * setBitmap() PNG-encodes the whole bitmap on the calling thread before streaming it to
  * the system; for a parallax-sized canvas that encode alone takes seconds and dominates
- * the latency of a wallpaper change. Encoding to JPEG ourselves and handing the bytes to
- * [WallpaperManager.setStream] is an order of magnitude faster and visually
- * indistinguishable for photos. Falls back to setBitmap() if the stream path fails.
+ * the latency of a wallpaper change. Encoding to lossless WebP at low effort ourselves
+ * and handing the bytes to [WallpaperManager.setStream] produces pixel-identical output
+ * several times faster. (Plain JPEG would be faster still, but its chroma subsampling
+ * visibly dulls vivid photos.) Falls back to setBitmap() if the stream path fails.
  */
 fun setWallpaperFast(wallpaperManager: WallpaperManager, bitmap: Bitmap, which: Int) {
     try {
         val start = android.os.SystemClock.elapsedRealtime()
         val bytes = java.io.ByteArrayOutputStream(bitmap.byteCount / 8).also { buffer ->
-            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, Constants.WALLPAPER_JPEG_QUALITY, buffer)) {
-                throw IllegalStateException("JPEG encode failed")
+            if (!bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, Constants.WALLPAPER_WEBP_EFFORT, buffer)) {
+                throw IllegalStateException("WebP encode failed")
             }
         }.toByteArray()
         val encoded = android.os.SystemClock.elapsedRealtime()
@@ -659,7 +660,8 @@ fun setWallpaperFast(wallpaperManager: WallpaperManager, bitmap: Bitmap, which: 
         Log.d(
             TAG,
             "Wallpaper set (which=$which, ${bitmap.width}x${bitmap.height}): " +
-                "jpeg ${encoded - start}ms, setStream ${android.os.SystemClock.elapsedRealtime() - encoded}ms"
+                "webp ${encoded - start}ms (${bytes.size / 1024}KB), " +
+                "setStream ${android.os.SystemClock.elapsedRealtime() - encoded}ms"
         )
     } catch (e: Exception) {
         Log.w(TAG, "setStream path failed, falling back to setBitmap", e)
