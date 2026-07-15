@@ -636,6 +636,37 @@ fun getAdaptiveBrightnessMultiplier(context: Context, brightness: Float): Float 
     return BrightnessCalculator.getAdaptiveMultiplier(isDarkMode, brightness)
 }
 
+/**
+ * Set [bitmap] as the wallpaper for [which] screen(s) without going through
+ * [WallpaperManager.setBitmap].
+ *
+ * setBitmap() PNG-encodes the whole bitmap on the calling thread before streaming it to
+ * the system; for a parallax-sized canvas that encode alone takes seconds and dominates
+ * the latency of a wallpaper change. Encoding to JPEG ourselves and handing the bytes to
+ * [WallpaperManager.setStream] is an order of magnitude faster and visually
+ * indistinguishable for photos. Falls back to setBitmap() if the stream path fails.
+ */
+fun setWallpaperFast(wallpaperManager: WallpaperManager, bitmap: Bitmap, which: Int) {
+    try {
+        val start = android.os.SystemClock.elapsedRealtime()
+        val bytes = java.io.ByteArrayOutputStream(bitmap.byteCount / 8).also { buffer ->
+            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, Constants.WALLPAPER_JPEG_QUALITY, buffer)) {
+                throw IllegalStateException("JPEG encode failed")
+            }
+        }.toByteArray()
+        val encoded = android.os.SystemClock.elapsedRealtime()
+        wallpaperManager.setStream(java.io.ByteArrayInputStream(bytes), null, true, which)
+        Log.d(
+            TAG,
+            "Wallpaper set (which=$which, ${bitmap.width}x${bitmap.height}): " +
+                "jpeg ${encoded - start}ms, setStream ${android.os.SystemClock.elapsedRealtime() - encoded}ms"
+        )
+    } catch (e: Exception) {
+        Log.w(TAG, "setStream path failed, falling back to setBitmap", e)
+        wallpaperManager.setBitmap(bitmap, null, true, which)
+    }
+}
+
 fun adaptiveBrightnessAdjustment(context: Context, source: Bitmap): Bitmap {
     val isDarkMode = (context.resources.configuration.uiMode and
         Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES

@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import com.anthonyla.paperize.core.EmptyAlbumException
 import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.constants.Constants
+import com.anthonyla.paperize.core.util.setWallpaperFast
 import com.anthonyla.paperize.domain.repository.SettingsRepository
 import com.anthonyla.paperize.domain.repository.WallpaperRepository
 import com.anthonyla.paperize.domain.usecase.ChangeWallpaperUseCase
@@ -114,12 +115,7 @@ class WallpaperChangeWorker @AssistedInject constructor(
                             Log.d(TAG, "Setting both screens - size: ${bitmap.width}x${bitmap.height}, config: ${bitmap.config}")
 
                             // Set HOME (rendered at parallax canvas size)
-                            wallpaperManager.setBitmap(
-                                bitmap,
-                                null,
-                                true,
-                                WallpaperManager.FLAG_SYSTEM
-                            )
+                            setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_SYSTEM)
                             Log.d(TAG, "Home wallpaper set in BOTH mode")
 
                             // Keep LOCK queue in sync with HOME so that if the user later
@@ -156,9 +152,7 @@ class WallpaperChangeWorker @AssistedInject constructor(
                         val lockResult = reapplyEffectsUseCase(homeAlbumId, ScreenType.LOCK)
                         lockResult.onSuccess { lockBitmap ->
                             try {
-                                wallpaperManager.setBitmap(
-                                    lockBitmap, null, true, WallpaperManager.FLAG_LOCK
-                                )
+                                setWallpaperFast(wallpaperManager, lockBitmap, WallpaperManager.FLAG_LOCK)
                                 Log.d(TAG, "Lock wallpaper set separately in BOTH mode")
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error setting lock wallpaper in BOTH mode", e)
@@ -213,12 +207,7 @@ class WallpaperChangeWorker @AssistedInject constructor(
 
                 Log.d(TAG, "Setting home wallpaper - size: ${bitmap.width}x${bitmap.height}, config: ${bitmap.config}")
 
-                wallpaperManager.setBitmap(
-                    bitmap,
-                    null,
-                    true,
-                    WallpaperManager.FLAG_SYSTEM
-                )
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_SYSTEM)
 
                 Log.d(TAG, "Home wallpaper changed successfully")
             } catch (e: Exception) {
@@ -256,12 +245,7 @@ class WallpaperChangeWorker @AssistedInject constructor(
 
                 Log.d(TAG, "Setting lock wallpaper - size: ${bitmap.width}x${bitmap.height}, config: ${bitmap.config}")
 
-                wallpaperManager.setBitmap(
-                    bitmap,
-                    null,
-                    true,
-                    WallpaperManager.FLAG_LOCK
-                )
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_LOCK)
 
                 Log.d(TAG, "Lock wallpaper changed successfully")
             } catch (e: Exception) {
