@@ -74,7 +74,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home-screen widget: tap to change wallpaper -->
+<!-- Home-screen widget: tap to change wallpaper -->
         <receiver
             android:name=".service.widget.ChangeWallpaperWidgetProvider"
             android:enabled="true"
@@ -86,6 +86,20 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/change_wallpaper_widget_info" />
+        </receiver>
+
+        <!-- Home-screen widget: tap to pause/resume automatic wallpaper changes -->
+        <receiver
+            android:name=".service.widget.PauseResumeWidgetProvider"
+            android:enabled="true"
+            android:exported="true"
+            android:label="@string/widget_pause_resume_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/pause_resume_widget_info" />
         </receiver>
 
         <!-- Quick Settings Tile -->

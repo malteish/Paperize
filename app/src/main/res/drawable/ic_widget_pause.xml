@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pause glyph on the app's launcher-icon colors, shown while the wallpaper changer is
+     running. Fixed brand colors, deliberately not theme-dependent: launcher icons keep
+     their colors in dark mode, and the widget should too. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group>
+        <clip-path android:pathData="M54,0 A54,54 0 0 1 108,54 A54,54 0 0 1 54,108 A54,54 0 0 1 0,54 A54,54 0 0 1 54,0 Z" />
+        <path
+            android:fillColor="#FFD9E2"
+            android:pathData="M0,0 H108 V108 H0 Z" />
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M39,34 h2 a5,5 0 0 1 5,5 v30 a5,5 0 0 1 -5,5 h-2 a5,5 0 0 1 -5,-5 v-30 a5,5 0 0 1 5,-5 z" />
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M67,34 h2 a5,5 0 0 1 5,5 v30 a5,5 0 0 1 -5,5 h-2 a5,5 0 0 1 -5,-5 v-30 a5,5 0 0 1 5,-5 z" />
+    </group>
+</vector>
