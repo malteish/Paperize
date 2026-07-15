@@ -13,7 +13,7 @@
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:layout_gravity="center"
-        android:src="@drawable/ic_widget_paperize"
+        android:src="@drawable/ic_widget_next"
         android:contentDescription="@string/change_wallpaper_now" />
 
 </FrameLayout>

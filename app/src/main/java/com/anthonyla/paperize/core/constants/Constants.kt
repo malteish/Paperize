@@ -43,6 +43,8 @@ object Constants {
     const val DEFAULT_PARALLAX_INTENSITY = 50
     const val DEFAULT_GRAYSCALE_PERCENTAGE = 0
     const val MAX_EFFECT_PERCENTAGE = 100
+    // JPEG quality for handing wallpapers to WallpaperManager.setStream (see setWallpaperFast)
+    const val WALLPAPER_JPEG_QUALITY = 95
     const val SLIDER_EFFECT_STEPS = 99
     const val DIALOG_MESSAGE_MAX_LINES = 10
     const val MIN_EFFECT_PERCENTAGE = 0

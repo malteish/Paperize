@@ -15,6 +15,7 @@ import com.anthonyla.paperize.R
 import com.anthonyla.paperize.core.EmptyAlbumException
 import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.constants.Constants
+import com.anthonyla.paperize.core.util.setWallpaperFast
 import com.anthonyla.paperize.domain.repository.SettingsRepository
 import com.anthonyla.paperize.domain.repository.WallpaperRepository
 import com.anthonyla.paperize.domain.usecase.ChangeWallpaperUseCase
@@ -158,12 +159,7 @@ class WallpaperChangeService : Service() {
                                     }
 
                                     // Set for home screen (rendered at parallax canvas size)
-                                    wallpaperManager.setBitmap(
-                                        bitmap,
-                                        null,
-                                        true,
-                                        WallpaperManager.FLAG_SYSTEM
-                                    )
+                                    setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_SYSTEM)
                                     Log.d(TAG, "Home wallpaper set in BOTH mode")
 
                                     // Keep LOCK queue in sync with HOME so that if the user later
@@ -204,9 +200,7 @@ class WallpaperChangeService : Service() {
                                 val lockResult = reapplyEffectsUseCase(homeAlbumId, ScreenType.LOCK)
                                 lockResult.onSuccess { lockBitmap ->
                                     try {
-                                        wallpaperManager.setBitmap(
-                                            lockBitmap, null, true, WallpaperManager.FLAG_LOCK
-                                        )
+                                        setWallpaperFast(wallpaperManager, lockBitmap, WallpaperManager.FLAG_LOCK)
                                         Log.d(TAG, "Lock wallpaper set separately in BOTH mode")
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error setting lock wallpaper in BOTH mode", e)
@@ -261,12 +255,7 @@ class WallpaperChangeService : Service() {
                     throw IllegalStateException("Bitmap has been recycled")
                 }
 
-                wallpaperManager.setBitmap(
-                    bitmap,
-                    null,
-                    true,
-                    WallpaperManager.FLAG_SYSTEM
-                )
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_SYSTEM)
                 Log.d(TAG, "Home wallpaper changed successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting home wallpaper", e)
@@ -295,12 +284,7 @@ class WallpaperChangeService : Service() {
                     throw IllegalStateException("Bitmap has been recycled")
                 }
 
-                wallpaperManager.setBitmap(
-                    bitmap,
-                    null,
-                    true,
-                    WallpaperManager.FLAG_LOCK
-                )
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_LOCK)
                 Log.d(TAG, "Lock wallpaper changed successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting lock wallpaper", e)
@@ -363,7 +347,7 @@ class WallpaperChangeService : Service() {
                 if (bitmap.width <= 0 || bitmap.height <= 0 || bitmap.isRecycled) {
                     throw IllegalStateException("Invalid bitmap for reapply")
                 }
-                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM)
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_SYSTEM)
                 Log.d(TAG, "Home effects reapplied successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting home wallpaper during reapply", e)
@@ -384,7 +368,7 @@ class WallpaperChangeService : Service() {
                 if (bitmap.width <= 0 || bitmap.height <= 0 || bitmap.isRecycled) {
                     throw IllegalStateException("Invalid bitmap for reapply")
                 }
-                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK)
+                setWallpaperFast(wallpaperManager, bitmap, WallpaperManager.FLAG_LOCK)
                 Log.d(TAG, "Lock effects reapplied successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting lock wallpaper during reapply", e)
