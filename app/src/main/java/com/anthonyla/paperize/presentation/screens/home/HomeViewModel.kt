@@ -171,6 +171,20 @@ class HomeViewModel @Inject constructor(
             // If unselecting and no albums left, disable changer and cancel alarms
             if (album == null && updated.lockAlbumId == null) {
                 toggleWallpaperChanger(false)
+            } else if (album != null && !updated.enableChanger) {
+                // Explicitly selecting an album turns the changer on (also resuming a pause)
+                // once all required albums are set
+                val homeActive = updated.homeEnabled && updated.homeAlbumId != null
+                val lockActive = updated.lockEnabled && updated.lockAlbumId != null
+                val hasRequiredAlbums = when {
+                    updated.homeEnabled && updated.lockEnabled -> homeActive && lockActive
+                    updated.homeEnabled -> homeActive
+                    updated.lockEnabled -> lockActive
+                    else -> false
+                }
+                if (hasRequiredAlbums) {
+                    toggleWallpaperChanger(true, onlyIfNotScheduled = true)
+                }
             } else if (album != null && updated.enableChanger) {
                 // Check if we have all required albums before triggering wallpaper change
                 val homeActive = updated.homeEnabled && updated.homeAlbumId != null
@@ -237,6 +251,20 @@ class HomeViewModel @Inject constructor(
             // If unselecting and no albums left, disable changer and cancel alarms
             if (album == null && updated.homeAlbumId == null) {
                 toggleWallpaperChanger(false)
+            } else if (album != null && !updated.enableChanger) {
+                // Explicitly selecting an album turns the changer on (also resuming a pause)
+                // once all required albums are set
+                val homeActive = updated.homeEnabled && updated.homeAlbumId != null
+                val lockActive = updated.lockEnabled && updated.lockAlbumId != null
+                val hasRequiredAlbums = when {
+                    updated.homeEnabled && updated.lockEnabled -> homeActive && lockActive
+                    updated.homeEnabled -> homeActive
+                    updated.lockEnabled -> lockActive
+                    else -> false
+                }
+                if (hasRequiredAlbums) {
+                    toggleWallpaperChanger(true, onlyIfNotScheduled = true)
+                }
             } else if (album != null && updated.enableChanger) {
                 // Check if we have all required albums before triggering wallpaper change
                 val homeActive = updated.homeEnabled && updated.homeAlbumId != null

@@ -26,6 +26,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -109,34 +110,38 @@ fun WallpaperScreen(
         }
     }
 
-    // Auto-toggle wallpaper changer based on album selection state
+    // Whether every enabled screen has an album selected - the precondition for the changer to run
     // Use IDs as source of truth - if ID is set, we trust it's valid
     // The ID will only be cleared when user explicitly deselects, not due to loading race conditions
-    LaunchedEffect(scheduleSettings.homeAlbumId, scheduleSettings.lockAlbumId, scheduleSettings.liveAlbumId, homeEnabled, lockEnabled, wallpaperMode) {
-        val allRequiredAlbumsSet = if (wallpaperMode == WallpaperMode.STATIC) {
-            when {
-                homeEnabled && lockEnabled -> {
-                    // Both are enabled, require both album IDs to be set
-                    scheduleSettings.homeAlbumId != null && scheduleSettings.lockAlbumId != null
-                }
-                homeEnabled -> {
-                    // Only home is enabled, require home album ID to be set
-                    scheduleSettings.homeAlbumId != null
-                }
-                lockEnabled -> {
-                    // Only lock is enabled, require lock album ID to be set
-                    scheduleSettings.lockAlbumId != null
-                }
-                else -> false // Neither enabled, should be disabled
+    val allRequiredAlbumsSet = if (wallpaperMode == WallpaperMode.STATIC) {
+        when {
+            homeEnabled && lockEnabled -> {
+                // Both are enabled, require both album IDs to be set
+                scheduleSettings.homeAlbumId != null && scheduleSettings.lockAlbumId != null
             }
-        } else {
-            // Live mode: require live album ID to be set
-            scheduleSettings.liveAlbumId != null
+            homeEnabled -> {
+                // Only home is enabled, require home album ID to be set
+                scheduleSettings.homeAlbumId != null
+            }
+            lockEnabled -> {
+                // Only lock is enabled, require lock album ID to be set
+                scheduleSettings.lockAlbumId != null
+            }
+            else -> false // Neither enabled, should be disabled
         }
+    } else {
+        // Live mode: require live album ID to be set
+        scheduleSettings.liveAlbumId != null
+    }
 
-        // Only update if current state doesn't match desired state (prevents redundant calls)
-        if (allRequiredAlbumsSet != scheduleSettings.enableChanger) {
-            onToggleChanger(allRequiredAlbumsSet)
+    // Auto-disable the changer when a required album is no longer selected. Never auto-enable
+    // here: this runs on every app open and would silently undo a pause (e.g. from the
+    // home-screen widget) and kick off a fresh schedule, changing the wallpaper immediately.
+    // The changer is only enabled by explicit user actions: selecting an album, tapping the
+    // widget, or the pause/resume button below.
+    LaunchedEffect(allRequiredAlbumsSet, scheduleSettings.enableChanger) {
+        if (!allRequiredAlbumsSet && scheduleSettings.enableChanger) {
+            onToggleChanger(false)
         }
     }
 
@@ -665,15 +670,34 @@ fun WallpaperScreen(
             }
         }
 
-        // Change wallpaper now
-        if (scheduleSettings.enableChanger) {
-            Button(
-                onClick = onChangeWallpaperNow,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
-            ) {
-                Text(text = stringResource(R.string.change_wallpaper_now))
+        // Change wallpaper now + pause/resume automatic changes
+        if (allRequiredAlbumsSet) {
+            if (scheduleSettings.enableChanger) {
+                Button(
+                    onClick = onChangeWallpaperNow,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
+                ) {
+                    Text(text = stringResource(R.string.change_wallpaper_now))
+                }
+                OutlinedButton(
+                    onClick = { onToggleChanger(false) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
+                ) {
+                    Text(text = stringResource(R.string.pause_wallpaper_changes))
+                }
+            } else {
+                Button(
+                    onClick = { onToggleChanger(true) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
+                ) {
+                    Text(text = stringResource(R.string.resume_wallpaper_changes))
+                }
             }
         }
 
