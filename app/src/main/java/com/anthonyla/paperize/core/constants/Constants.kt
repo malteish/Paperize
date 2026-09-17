@@ -204,4 +204,7 @@ object PreferenceKeys {
 
     // Wallpaper mode
     const val WALLPAPER_MODE = "wallpaper_mode"
+
+    // Premium folder (destination for manually saved wallpapers)
+    const val PREMIUM_FOLDER_URI = "premium_folder_uri"
 }
