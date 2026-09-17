@@ -7,9 +7,7 @@ data class AppSettings(
     val darkMode: Boolean? = null,  // null = system default, true = dark, false = light
     val dynamicTheming: Boolean = false,
     val animate: Boolean = true,
-    val firstLaunch: Boolean = true,
-    // Tree URI of the folder that "Save to premium" copies wallpapers into; null = not configured
-    val premiumFolderUri: String? = null
+    val firstLaunch: Boolean = true
 ) {
     companion object {
         fun default() = AppSettings()
