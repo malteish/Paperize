@@ -66,6 +66,28 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Remember the folder the copy-to-premium widget saves into.
+     *
+     * [uri] is a Storage Access Framework tree URI whose persistable permission the caller
+     * has already taken — the ViewModel only persists the string.
+     */
+    fun updatePremiumFolder(uri: String) {
+        viewModelScope.launch {
+            settingsRepository.updatePremiumFolderUri(uri)
+        }
+    }
+
+    /**
+     * Forget the premium folder. The persisted URI permission is deliberately left in place:
+     * the same tree may also back an album folder, which would break if the grant were released.
+     */
+    fun clearPremiumFolder() {
+        viewModelScope.launch {
+            settingsRepository.updatePremiumFolderUri(null)
+        }
+    }
+
     fun updateFirstLaunch(isFirstLaunch: Boolean) {
         viewModelScope.launch {
             // Use atomic update to prevent race conditions

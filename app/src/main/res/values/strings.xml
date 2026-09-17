@@ -224,4 +224,24 @@
   <string name="pause_wallpaper_changes">Pause wallpaper changes</string>
   <string name="resume_wallpaper_changes">Resume wallpaper changes</string>
 
+  <!-- Copy-to-premium widget -->
+  <string name="widget_copy_to_premium_label">Copy to premium folder</string>
+  <string name="widget_copy_to_premium_description">Tap to copy the current wallpaper into your premium folder</string>
+  <string name="copy_to_premium_folder">Copy the current wallpaper to the premium folder</string>
+  <string name="copied_to_premium_folder">Copied %1$s to the premium folder</string>
+  <string name="already_in_premium_folder">%1$s is already in the premium folder</string>
+  <string name="no_premium_folder_configured">Pick a premium folder in Paperize settings first</string>
+  <string name="premium_folder_unavailable">The premium folder is unavailable. Pick it again in settings</string>
+  <string name="no_current_wallpaper_to_copy">No wallpaper has been set by Paperize yet</string>
+  <string name="copy_to_premium_folder_failed">Could not copy the wallpaper to the premium folder</string>
+
+  <!-- Premium folder setting -->
+  <string name="premium_folder">Premium folder</string>
+  <string name="premium_folder_description">The copy-to-premium widget saves the current wallpaper into this folder.</string>
+  <string name="current_folder">Current folder</string>
+  <string name="premium_folder_not_set">No folder picked</string>
+  <string name="choose_folder">Choose</string>
+  <string name="change_folder">Change</string>
+  <string name="clear_folder">Clear</string>
+
 </resources>

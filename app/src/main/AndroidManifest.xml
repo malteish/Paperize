@@ -102,6 +102,20 @@
                 android:resource="@xml/pause_resume_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget: tap to copy the current wallpaper into the premium folder -->
+        <receiver
+            android:name=".service.widget.CopyToPremiumWidgetProvider"
+            android:enabled="true"
+            android:exported="true"
+            android:label="@string/widget_copy_to_premium_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/copy_to_premium_widget_info" />
+        </receiver>
+
         <!-- Quick Settings Tile -->
         <service
             android:name=".service.tile.WallpaperTileService"
