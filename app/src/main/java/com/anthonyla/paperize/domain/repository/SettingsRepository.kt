@@ -103,6 +103,12 @@ interface SettingsRepository {
     suspend fun updateAnimate(enabled: Boolean)
     suspend fun updateFirstLaunch(isFirstLaunch: Boolean)
 
+    /**
+     * Atomically update the premium folder (SAF tree URI) the copy-to-premium widget saves into.
+     * Pass null to clear it.
+     */
+    suspend fun updatePremiumFolderUri(uri: String?)
+
     // ============ Atomic ScheduleSettings Operations ============
 
     /**

@@ -137,6 +137,7 @@ object PreferenceKeys {
     const val DARK_MODE = "dark_mode"
     const val DYNAMIC_THEMING = "dynamic_theming"
     const val ANIMATE = "animate"
+    const val PREMIUM_FOLDER_URI = "premium_folder_uri"
 
     // Scheduling
     const val ENABLE_CHANGER = "enable_changer"

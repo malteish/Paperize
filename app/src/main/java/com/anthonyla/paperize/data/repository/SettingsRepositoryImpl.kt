@@ -76,6 +76,9 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun updateFirstLaunch(isFirstLaunch: Boolean) =
         preferencesManager.updateFirstLaunch(isFirstLaunch)
 
+    override suspend fun updatePremiumFolderUri(uri: String?) =
+        preferencesManager.updatePremiumFolderUri(uri)
+
     // ============ Atomic ScheduleSettings Operations ============
 
     override suspend fun updateEnableChanger(enabled: Boolean) =

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Star glyph ("keep this one") on the app's launcher-icon colors, for the
+     copy-to-premium widget. Same circular clip, background and glyph color as the
+     change-wallpaper and pause/resume widgets so all three read as one family.
+     Fixed brand colors, deliberately not theme-dependent: launcher icons keep their
+     colors in dark mode, and the widget should too. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group>
+        <clip-path android:pathData="M54,0 A54,54 0 0 1 108,54 A54,54 0 0 1 54,108 A54,54 0 0 1 0,54 A54,54 0 0 1 54,0 Z" />
+        <path
+            android:fillColor="#FFD9E2"
+            android:pathData="M0,0 H108 V108 H0 Z" />
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M54,28 L60.76,44.7 L78.73,45.97 L64.94,57.55 L69.28,75.03 L54,65.5 L38.72,75.03 L43.06,57.55 L29.27,45.97 L47.24,44.7 Z" />
+    </group>
+</vector>

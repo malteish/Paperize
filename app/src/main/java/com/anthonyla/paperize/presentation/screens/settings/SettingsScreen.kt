@@ -1,5 +1,10 @@
 package com.anthonyla.paperize.presentation.screens.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.BatteryFull
@@ -28,6 +34,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.anthonyla.paperize.R
 import com.anthonyla.paperize.presentation.common.components.SettingSwitchItem
 import com.anthonyla.paperize.presentation.theme.AppSpacing
+import com.anthonyla.paperize.core.util.PremiumFolderNaming
 import com.anthonyla.paperize.core.util.BatteryOptimizationUtil.isIgnoringBatteryOptimizations
 import com.anthonyla.paperize.core.util.BatteryOptimizationUtil.requestIgnoreBatteryOptimizations
 
@@ -51,6 +58,27 @@ fun SettingsScreen(
 
     var isIgnoringBatteryOptimizations by remember {
         mutableStateOf(isIgnoringBatteryOptimizations(context))
+    }
+
+    // Premium folder picker. Read *and* write permission is persisted: the copy-to-premium
+    // widget has to create files in this tree long after the picker activity is gone.
+    val premiumFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri?.let {
+            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            try {
+                context.contentResolver.takePersistableUriPermission(it, takeFlags)
+                viewModel.updatePremiumFolder(it.toString())
+            } catch (_: Exception) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.premium_folder_unavailable),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     // Refresh battery optimization status when returning to the screen
@@ -190,6 +218,88 @@ fun SettingsScreen(
                 checked = appSettings?.animate ?: true,
                 onCheckedChange = { viewModel.updateAnimate(it) }
             )
+
+            Spacer(modifier = Modifier.height(AppSpacing.extraLarge))
+
+            // Premium Folder Section
+            SectionHeader(
+                icon = Icons.Filled.Star,
+                title = stringResource(R.string.premium_folder)
+            )
+
+            Spacer(modifier = Modifier.height(AppSpacing.medium))
+
+            val premiumFolderUri = appSettings?.premiumFolderUri
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(AppSpacing.large)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.current_folder),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(AppSpacing.extraSmall))
+                            Text(
+                                text = premiumFolderUri
+                                    ?.let { PremiumFolderNaming.folderDisplayName(it) }
+                                    ?: stringResource(R.string.premium_folder_not_set),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (premiumFolderUri != null) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(AppSpacing.medium))
+
+                        FilledTonalButton(onClick = { premiumFolderPicker.launch(null) }) {
+                            Text(
+                                stringResource(
+                                    if (premiumFolderUri != null) R.string.change_folder
+                                    else R.string.choose_folder
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(AppSpacing.small))
+
+                    Text(
+                        text = stringResource(R.string.premium_folder_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (premiumFolderUri != null) {
+                        TextButton(
+                            onClick = { viewModel.clearPremiumFolder() },
+                            contentPadding = PaddingValues(horizontal = AppSpacing.small)
+                        ) {
+                            Text(stringResource(R.string.clear_folder))
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(AppSpacing.extraLarge))
 
