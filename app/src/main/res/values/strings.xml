@@ -207,4 +207,23 @@
   <string name="optimizing">Optimizing (May delay changes)</string>
   <string name="reliability">Reliability</string>
 
+  <!-- Premium folder -->
+  <string name="premium_folder">Premium Folder</string>
+  <string name="premium_folder_destination">Destination folder</string>
+  <string name="premium_folder_description">Wallpapers you save are copied here as-is \u2014 the original file, without effects.</string>
+  <string name="premium_folder_not_set">No folder selected</string>
+  <string name="premium_folder_selected">Folder selected</string>
+  <string name="choose_folder">Choose</string>
+  <string name="change_button">Change</string>
+  <string name="clear_folder">Clear folder</string>
+  <string name="save_to_premium">Save to premium</string>
+  <string name="save_to_premium_description">Copy the current wallpaper</string>
+  <string name="premium_copy_in_progress">Copying\u2026</string>
+  <string name="premium_copy_saved">Saved %1$s to the premium folder</string>
+  <string name="premium_copy_already_saved">%1$s is already in the premium folder</string>
+  <string name="premium_folder_not_configured">Choose a premium folder in Settings first</string>
+  <string name="premium_folder_unavailable">The premium folder is no longer available</string>
+  <string name="premium_copy_no_current_wallpaper">No wallpaper has been set by Paperize yet</string>
+  <string name="premium_copy_failed">Could not copy the wallpaper</string>
+
 </resources>

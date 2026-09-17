@@ -48,7 +48,8 @@ class PreferencesManager @Inject constructor(
             darkMode = prefs[booleanPreferencesKey(PreferenceKeys.DARK_MODE)],
             dynamicTheming = prefs[booleanPreferencesKey(PreferenceKeys.DYNAMIC_THEMING)] ?: false,
             animate = prefs[booleanPreferencesKey(PreferenceKeys.ANIMATE)] ?: true,
-            firstLaunch = prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] ?: true
+            firstLaunch = prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] ?: true,
+            premiumFolderUri = prefs[stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI)]
         )
     }
 
@@ -57,7 +58,8 @@ class PreferencesManager @Inject constructor(
             darkMode = prefs[booleanPreferencesKey(PreferenceKeys.DARK_MODE)],
             dynamicTheming = prefs[booleanPreferencesKey(PreferenceKeys.DYNAMIC_THEMING)] ?: false,
             animate = prefs[booleanPreferencesKey(PreferenceKeys.ANIMATE)] ?: true,
-            firstLaunch = prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] ?: true
+            firstLaunch = prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] ?: true,
+            premiumFolderUri = prefs[stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI)]
         )
     }
 
@@ -71,6 +73,11 @@ class PreferencesManager @Inject constructor(
             prefs[booleanPreferencesKey(PreferenceKeys.DYNAMIC_THEMING)] = settings.dynamicTheming
             prefs[booleanPreferencesKey(PreferenceKeys.ANIMATE)] = settings.animate
             prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] = settings.firstLaunch
+            if (settings.premiumFolderUri != null) {
+                prefs[stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI)] = settings.premiumFolderUri
+            } else {
+                prefs.remove(stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI))
+            }
         }
     }
 
@@ -421,6 +428,20 @@ class PreferencesManager @Inject constructor(
     suspend fun updateFirstLaunch(isFirstLaunch: Boolean) {
         dataStore.edit { prefs ->
             prefs[booleanPreferencesKey(PreferenceKeys.FIRST_LAUNCH)] = isFirstLaunch
+        }
+    }
+
+    /**
+     * Atomically update the premium folder tree URI without race conditions
+     * Passing null clears the configured folder
+     */
+    suspend fun updatePremiumFolderUri(uri: String?) {
+        dataStore.edit { prefs ->
+            if (uri != null) {
+                prefs[stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI)] = uri
+            } else {
+                prefs.remove(stringPreferencesKey(PreferenceKeys.PREMIUM_FOLDER_URI))
+            }
         }
     }
 

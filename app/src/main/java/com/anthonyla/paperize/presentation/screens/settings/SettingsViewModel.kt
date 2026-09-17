@@ -1,7 +1,10 @@
 package com.anthonyla.paperize.presentation.screens.settings
 import com.anthonyla.paperize.core.constants.Constants
 
+import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anthonyla.paperize.core.WallpaperMode
@@ -10,9 +13,13 @@ import com.anthonyla.paperize.domain.repository.AlbumRepository
 import com.anthonyla.paperize.domain.repository.SettingsRepository
 import com.anthonyla.paperize.service.worker.WallpaperScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,6 +29,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
     private val albumRepository: AlbumRepository,
     private val wallpaperScheduler: WallpaperScheduler
@@ -44,6 +52,50 @@ class SettingsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(Constants.FLOW_SUBSCRIPTION_TIMEOUT_MS),
             initialValue = WallpaperMode.STATIC
         )
+
+    /**
+     * Human-readable name of the configured premium folder, or null when none is set
+     * or the folder is no longer reachable
+     */
+    val premiumFolderName: StateFlow<String?> = settingsRepository.getAppSettingsFlow()
+        .map { it.premiumFolderUri }
+        .distinctUntilChanged()
+        .map { uri ->
+            uri?.let {
+                try {
+                    DocumentFile.fromTreeUri(context, it.toUri())?.name
+                } catch (e: Exception) {
+                    Log.w(TAG, "Cannot resolve premium folder name", e)
+                    null
+                }
+            }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(Constants.FLOW_SUBSCRIPTION_TIMEOUT_MS),
+            initialValue = null
+        )
+
+    /**
+     * Set the folder that "Save to premium" copies wallpapers into
+     *
+     * @param uri tree URI the caller already holds a persisted permission for
+     */
+    fun setPremiumFolder(uri: String) {
+        viewModelScope.launch {
+            settingsRepository.updatePremiumFolderUri(uri)
+        }
+    }
+
+    /**
+     * Forget the configured premium folder
+     */
+    fun clearPremiumFolder() {
+        viewModelScope.launch {
+            settingsRepository.updatePremiumFolderUri(null)
+        }
+    }
 
     fun updateDarkMode(enabled: Boolean) {
         viewModelScope.launch {

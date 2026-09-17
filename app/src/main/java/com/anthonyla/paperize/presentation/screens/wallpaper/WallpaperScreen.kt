@@ -49,6 +49,7 @@ import com.anthonyla.paperize.domain.model.ScheduleSettings
 import com.anthonyla.paperize.presentation.common.components.SettingSwitchItem
 import com.anthonyla.paperize.presentation.screens.wallpaper.components.AlbumSelectionBottomSheet
 import com.anthonyla.paperize.presentation.screens.wallpaper.components.CurrentWallpaperPreview
+import com.anthonyla.paperize.presentation.screens.wallpaper.components.PremiumFolderCard
 import com.anthonyla.paperize.presentation.screens.wallpaper.components.SettingSwitch
 import com.anthonyla.paperize.presentation.screens.wallpaper.components.SettingSwitchWithSlider
 import com.anthonyla.paperize.presentation.screens.wallpaper.components.TimeIntervalPicker
@@ -64,7 +65,9 @@ fun WallpaperScreen(
     scheduleSettings: ScheduleSettings,
     appSettings: AppSettings,
     wallpaperMode: WallpaperMode,
+    premiumCopyState: PremiumCopyState,
     onToggleChanger: (Boolean) -> Unit,
+    onSaveToPremiumFolder: () -> Unit,
     onSelectHomeAlbum: (AlbumSummary?) -> Unit,
     onSelectLockAlbum: (AlbumSummary?) -> Unit,
     onSelectLiveAlbum: (AlbumSummary?) -> Unit,
@@ -269,6 +272,17 @@ fun WallpaperScreen(
                 }
             }
         }
+
+        // Save the currently applied wallpaper into the user's premium folder
+        PremiumFolderCard(
+            state = premiumCopyState,
+            folderConfigured = appSettings.premiumFolderUri != null,
+            onClick = onSaveToPremiumFolder,
+            modifier = Modifier.padding(
+                horizontal = AppSpacing.small,
+                vertical = AppSpacing.extraSmall
+            )
+        )
 
         // Album Selection - Enhanced with better card styling
         // Only show album selection when at least one screen is enabled
