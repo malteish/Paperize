@@ -103,12 +103,6 @@ interface SettingsRepository {
     suspend fun updateAnimate(enabled: Boolean)
     suspend fun updateFirstLaunch(isFirstLaunch: Boolean)
 
-    /**
-     * Atomically update the premium folder tree URI
-     * Pass null to clear the configured folder
-     */
-    suspend fun updatePremiumFolderUri(uri: String?)
-
     // ============ Atomic ScheduleSettings Operations ============
 
     /**

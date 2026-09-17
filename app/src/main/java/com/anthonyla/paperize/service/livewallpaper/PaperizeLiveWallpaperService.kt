@@ -214,14 +214,6 @@ class PaperizeLiveWallpaperService : GLWallpaperService(), LifecycleOwner {
                         return@withContext EmptyImageLoader
                     }
 
-                    // Record what is on screen so features like "Save to premium" know
-                    // which wallpaper is currently displayed
-                    try {
-                        wallpaperRepository.setCurrentWallpaper(albumId, ScreenType.LIVE, wallpaper.id)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Failed to record current live wallpaper", e)
-                    }
-
                     // Peek at queue to see if it needs refilling (not dequeuing, just checking)
                     val nextInQueue = wallpaperRepository.getNextWallpaperInQueue(albumId, ScreenType.LIVE)
                     if (nextInQueue == null) {

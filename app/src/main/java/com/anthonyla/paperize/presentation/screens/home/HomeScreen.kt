@@ -16,8 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,7 +24,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -39,7 +36,6 @@ import com.anthonyla.paperize.core.WallpaperMode
 import com.anthonyla.paperize.presentation.screens.home.components.HomeTopBar
 import com.anthonyla.paperize.presentation.screens.home.components.getTabItems
 import com.anthonyla.paperize.presentation.screens.library.LibraryScreen
-import com.anthonyla.paperize.presentation.screens.wallpaper.PremiumCopyState
 import com.anthonyla.paperize.presentation.screens.wallpaper.WallpaperScreen
 import kotlinx.coroutines.launch
 
@@ -56,8 +52,6 @@ fun HomeScreen(
     val appSettings by viewModel.appSettings.collectAsStateWithLifecycle()
     val wallpaperMode by viewModel.wallpaperMode.collectAsStateWithLifecycle()
     val showLiveWallpaperPrompt by viewModel.showLiveWallpaperPrompt.collectAsStateWithLifecycle()
-    val premiumCopyState by viewModel.premiumCopyState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -77,27 +71,13 @@ fun HomeScreen(
 
 
 
-    // Surface the outcome of a "Save to premium" press, then reset the card back to idle
-    LaunchedEffect(premiumCopyState) {
-        val message = when (val state = premiumCopyState) {
-            is PremiumCopyState.Success -> state.message
-            is PremiumCopyState.Error -> state.message
-            else -> null
-        }
-        if (message != null) {
-            snackbarHostState.showSnackbar(message)
-            viewModel.clearPremiumCopyState()
-        }
-    }
-
     Scaffold(
         topBar = {
             HomeTopBar(
                 showSelectionModeAppBar = false,
                 onSettingsClick = onNavigateToSettings
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
 
             Column(modifier = modifier.padding(paddingValues)) {
@@ -137,9 +117,7 @@ fun HomeScreen(
                                     scheduleSettings = scheduleSettings,
                                     appSettings = appSettings,
                                     wallpaperMode = wallpaperMode!!,
-                                    premiumCopyState = premiumCopyState,
                                     onToggleChanger = { viewModel.toggleWallpaperChanger(it, onlyIfNotScheduled = true) },
-                                    onSaveToPremiumFolder = { viewModel.saveCurrentWallpaperToPremiumFolder() },
                                     onSelectHomeAlbum = { album -> viewModel.selectHomeAlbum(album) },
                                     onSelectLockAlbum = { album -> viewModel.selectLockAlbum(album) },
                                     onSelectLiveAlbum = { album -> viewModel.selectLiveAlbum(album) },

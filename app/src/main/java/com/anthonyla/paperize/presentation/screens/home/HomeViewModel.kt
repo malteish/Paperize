@@ -5,17 +5,14 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anthonyla.paperize.R
 import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.constants.Constants
 import com.anthonyla.paperize.core.util.isPaperizeLiveWallpaperActive
 import com.anthonyla.paperize.domain.model.AlbumSummary
 import com.anthonyla.paperize.domain.model.ScheduleSettings
 import com.anthonyla.paperize.domain.repository.SettingsRepository
-import com.anthonyla.paperize.domain.usecase.CopyCurrentWallpaperUseCase
 import com.anthonyla.paperize.domain.usecase.CreateAlbumUseCase
 import com.anthonyla.paperize.domain.usecase.GetAlbumSummariesUseCase
-import com.anthonyla.paperize.presentation.screens.wallpaper.PremiumCopyState
 import com.anthonyla.paperize.service.wallpaper.WallpaperChangeService
 import com.anthonyla.paperize.service.worker.WallpaperScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +34,6 @@ class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     getAlbumSummariesUseCase: GetAlbumSummariesUseCase,
     private val createAlbumUseCase: CreateAlbumUseCase,
-    private val copyCurrentWallpaperUseCase: CopyCurrentWallpaperUseCase,
     private val settingsRepository: SettingsRepository,
     private val wallpaperScheduler: WallpaperScheduler,
     private val wallpaperRepository: com.anthonyla.paperize.domain.repository.WallpaperRepository
@@ -86,51 +82,6 @@ class HomeViewModel @Inject constructor(
 
     fun dismissLiveWallpaperPrompt() {
         _showLiveWallpaperPrompt.value = false
-    }
-
-    // State of the "Save to premium" card
-    private val _premiumCopyState = MutableStateFlow<PremiumCopyState>(PremiumCopyState.Idle)
-    val premiumCopyState: StateFlow<PremiumCopyState> = _premiumCopyState
-
-    /**
-     * Copy the wallpaper that is currently applied into the configured premium folder
-     */
-    fun saveCurrentWallpaperToPremiumFolder() {
-        // Ignore repeat presses while a copy is running
-        if (_premiumCopyState.value is PremiumCopyState.Copying) return
-
-        viewModelScope.launch {
-            _premiumCopyState.value = PremiumCopyState.Copying
-
-            _premiumCopyState.value = when (val result = copyCurrentWallpaperUseCase()) {
-                is com.anthonyla.paperize.core.Result.Success -> {
-                    val copied = result.data
-                    PremiumCopyState.Success(
-                        if (copied.alreadyExisted) {
-                            context.getString(R.string.premium_copy_already_saved, copied.fileName)
-                        } else {
-                            context.getString(R.string.premium_copy_saved, copied.fileName)
-                        }
-                    )
-                }
-                is com.anthonyla.paperize.core.Result.Error -> {
-                    Log.e(TAG, "Error copying wallpaper to premium folder", result.exception)
-                    PremiumCopyState.Error(
-                        result.message ?: context.getString(R.string.premium_copy_failed)
-                    )
-                }
-                is com.anthonyla.paperize.core.Result.Loading -> PremiumCopyState.Idle
-            }
-        }
-    }
-
-    /**
-     * Clear the result of the last copy once it has been shown to the user
-     */
-    fun clearPremiumCopyState() {
-        if (_premiumCopyState.value !is PremiumCopyState.Copying) {
-            _premiumCopyState.value = PremiumCopyState.Idle
-        }
     }
 
     /**

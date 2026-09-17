@@ -1,9 +1,5 @@
 package com.anthonyla.paperize.presentation.screens.settings
 
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,7 +11,6 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,7 +44,6 @@ fun SettingsScreen(
 ) {
     val appSettings by viewModel.appSettings.collectAsStateWithLifecycle()
     val wallpaperMode by viewModel.wallpaperMode.collectAsStateWithLifecycle()
-    val premiumFolderName by viewModel.premiumFolderName.collectAsStateWithLifecycle()
     var showResetDialog by remember { mutableStateOf(false) }
     var showModeChangeDialog by remember { mutableStateOf(false) }
     var pendingMode by remember { mutableStateOf<com.anthonyla.paperize.core.WallpaperMode?>(null) }
@@ -57,21 +51,6 @@ fun SettingsScreen(
 
     var isIgnoringBatteryOptimizations by remember {
         mutableStateOf(isIgnoringBatteryOptimizations(context))
-    }
-
-    // Premium folder picker - the grant must survive reboots, so it is persisted
-    val premiumFolderPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
-    ) { uri: Uri? ->
-        uri?.let {
-            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            try {
-                context.contentResolver.takePersistableUriPermission(it, takeFlags)
-                viewModel.setPremiumFolder(it.toString())
-            } catch (_: Exception) {
-                // Permission could not be persisted - leave the previous folder in place
-            }
-        }
     }
 
     // Refresh battery optimization status when returning to the screen
@@ -174,89 +153,6 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(AppSpacing.extraLarge))
-
-            // Premium Folder Section
-            SectionHeader(
-                icon = Icons.Filled.BookmarkAdd,
-                title = stringResource(R.string.premium_folder)
-            )
-
-            Spacer(modifier = Modifier.height(AppSpacing.medium))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(AppSpacing.large)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.premium_folder_destination),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(AppSpacing.extraSmall))
-                            Text(
-                                text = premiumFolderName
-                                    ?: if (appSettings?.premiumFolderUri != null) {
-                                        stringResource(R.string.premium_folder_selected)
-                                    } else {
-                                        stringResource(R.string.premium_folder_not_set)
-                                    },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (appSettings?.premiumFolderUri != null) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(AppSpacing.medium))
-
-                        Button(onClick = { premiumFolderPicker.launch(null) }) {
-                            Text(
-                                if (appSettings?.premiumFolderUri != null) {
-                                    stringResource(R.string.change_button)
-                                } else {
-                                    stringResource(R.string.choose_folder)
-                                }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(AppSpacing.small))
-
-                    Text(
-                        text = stringResource(R.string.premium_folder_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    if (appSettings?.premiumFolderUri != null) {
-                        TextButton(
-                            onClick = { viewModel.clearPremiumFolder() },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text(stringResource(R.string.clear_folder))
-                        }
-                    }
                 }
             }
 
