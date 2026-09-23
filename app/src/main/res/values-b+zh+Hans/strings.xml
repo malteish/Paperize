@@ -216,4 +216,37 @@
   <string name="individual_wallpaper_static_only">请切换到静态模式以设置单张壁纸。</string>
   <string name="change_next_wallpaper_shortcut">切换到下一张已配置的壁纸</string>
 
+  <!-- Fork additions: widgets, gallery, home scrolling, premium folder -->
+  <string name="widget_change_wallpaper_label">更换壁纸</string>
+  <string name="widget_change_wallpaper_description">点按以更换壁纸</string>
+  <string name="dont_scroll_home">主屏幕之间不滚动</string>
+  <string name="dont_scroll_home_description">在每一页主屏幕上显示相同的居中壁纸</string>
+  <string name="open_in_gallery">在图库中打开当前壁纸</string>
+  <string name="no_current_wallpaper_to_open">Paperize 尚未设置任何壁纸</string>
+  <string name="no_app_to_open_image">找不到可以打开该图片的应用</string>
+  <string name="widget_pause_resume_label">暂停/恢复壁纸</string>
+  <string name="widget_pause_resume_description">点按以暂停或恢复自动更换壁纸</string>
+  <string name="pause_wallpaper_changes">暂停更换壁纸</string>
+  <string name="resume_wallpaper_changes">恢复更换壁纸</string>
+  <string name="widget_controls_row_label">Paperize 控制（横排）</string>
+  <string name="widget_controls_row_description">并排显示更换、暂停/恢复和复制到精选文件夹按钮</string>
+  <string name="widget_controls_column_label">Paperize 控制（竖排）</string>
+  <string name="widget_controls_column_description">上下排列更换、暂停/恢复和复制到精选文件夹按钮</string>
+  <string name="widget_copy_to_premium_label">复制到精选文件夹</string>
+  <string name="widget_copy_to_premium_description">点按以将当前壁纸复制到你的精选文件夹</string>
+  <string name="copy_to_premium_folder">将当前壁纸复制到精选文件夹</string>
+  <string name="copied_to_premium_folder">已将 %1$s 复制到精选文件夹</string>
+  <string name="already_in_premium_folder">%1$s 已在精选文件夹中</string>
+  <string name="no_premium_folder_configured">请先在 Paperize 设置中选择精选文件夹</string>
+  <string name="premium_folder_unavailable">无法访问精选文件夹，请在设置中重新选择</string>
+  <string name="no_current_wallpaper_to_copy">Paperize 尚未设置任何壁纸</string>
+  <string name="copy_to_premium_folder_failed">无法将壁纸复制到精选文件夹</string>
+  <string name="premium_folder">精选文件夹</string>
+  <string name="premium_folder_description">“复制到精选文件夹”小部件会将当前壁纸保存到此文件夹。</string>
+  <string name="current_folder">当前文件夹</string>
+  <string name="premium_folder_not_set">未选择文件夹</string>
+  <string name="choose_folder">选择</string>
+  <string name="change_folder">更改</string>
+  <string name="clear_folder">清除</string>
+
 </resources>
