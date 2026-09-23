@@ -1,42 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- All three widget buttons stacked in a 1x2 widget.
-     Each slot splits the widget evenly and is its own tap target. The icons use
-     fitCenter instead of a fixed 56dp size: three 56dp icons do not fit the two cells of
-     a small launcher grid, and fitCenter keeps them circular at whatever size fits.
-     The pause/resume src is only the widget-picker preview default; the provider swaps
-     it to match the changer state. -->
+     The icons are capped at the 56dp of the single-button widgets and grouped in the
+     centre with a 3dp margin, instead of each filling a third of the widget: on launchers
+     with large cells that made them far bigger than every other icon. adjustViewBounds with
+     wrap_content keeps them circular and lets them shrink below 56dp when a small launcher
+     grid leaves less room. The pause/resume src is only the widget-picker preview default;
+     the provider swaps it to match the changer state. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:orientation="vertical">
 
     <ImageView
         android:id="@+id/widget_change"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        android:adjustViewBounds="true"
+        android:maxWidth="56dp"
+        android:maxHeight="56dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_widget_next"
         android:contentDescription="@string/change_wallpaper_now" />
 
     <ImageView
         android:id="@+id/widget_pause_resume"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        android:adjustViewBounds="true"
+        android:maxWidth="56dp"
+        android:maxHeight="56dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_widget_pause"
         android:contentDescription="@string/pause_wallpaper_changes" />
 
     <ImageView
         android:id="@+id/widget_premium"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        android:adjustViewBounds="true"
+        android:maxWidth="56dp"
+        android:maxHeight="56dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_widget_premium"
         android:contentDescription="@string/copy_to_premium_folder" />
