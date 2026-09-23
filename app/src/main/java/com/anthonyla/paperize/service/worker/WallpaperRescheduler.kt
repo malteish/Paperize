@@ -3,6 +3,7 @@ package com.anthonyla.paperize.service.worker
 import android.util.Log
 import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.WallpaperMode
+import com.anthonyla.paperize.core.constants.Constants
 import com.anthonyla.paperize.domain.repository.SettingsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,8 +25,8 @@ class WallpaperRescheduler @Inject constructor(
     }
 
     /**
-     * Schedule wallpaper changes according to the saved settings. Does nothing unless the
-     * changer is enabled and the required album(s) are selected.
+     * Schedule wallpaper changes according to the saved settings. When the changer is
+     * disabled or the required album(s) are missing, stale scheduled work is cancelled.
      *
      * @param onlyIfNotScheduled If true, don't reschedule work that is already scheduled
      * (used on boot, where existing work should keep its timing).
@@ -34,6 +35,7 @@ class WallpaperRescheduler @Inject constructor(
         val settings = settingsRepository.getScheduleSettings()
 
         if (!settings.enableChanger) {
+            wallpaperScheduler.cancelAllWallpaperChanges()
             Log.d(TAG, "Wallpaper changer disabled, not scheduling")
             return
         }
@@ -44,12 +46,20 @@ class WallpaperRescheduler @Inject constructor(
         if (wallpaperMode == WallpaperMode.LIVE) {
             // LIVE mode: schedule live wallpaper changes
             if (settings.liveAlbumId != null && settings.liveIntervalMinutes > 0) {
-                wallpaperScheduler.scheduleWallpaperChange(
-                    ScreenType.LIVE,
-                    settings.liveIntervalMinutes
-                )
+                if (settings.liveIntervalMinutes >= Constants.MIN_INTERVAL_MINUTES) {
+                    wallpaperScheduler.scheduleWallpaperChange(
+                        ScreenType.LIVE,
+                        settings.liveIntervalMinutes
+                    )
+                } else {
+                    // Sub-15-minute live intervals run in the live wallpaper service itself.
+                    wallpaperScheduler.cancelWallpaperChange(ScreenType.LIVE)
+                }
+                wallpaperScheduler.scheduleAlbumRefresh()
                 Log.d(TAG, "Live wallpaper changes scheduled")
             } else {
+                wallpaperScheduler.cancelWallpaperChange(ScreenType.LIVE)
+                wallpaperScheduler.cancelAlbumRefresh()
                 Log.d(TAG, "Live mode but no album or interval, not scheduling")
             }
         } else {
@@ -95,6 +105,7 @@ class WallpaperRescheduler @Inject constructor(
 
                 Log.d(TAG, "Wallpaper changes rescheduled successfully")
             } else {
+                wallpaperScheduler.cancelAllWallpaperChanges()
                 Log.d(TAG, "Wallpaper changer enabled but required albums not selected, not scheduling")
             }
         }

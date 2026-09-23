@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -26,7 +27,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,7 +63,7 @@ enum class AlbumSelectionContext {
 @Composable
 fun WallpaperScreen(
     albums: List<AlbumSummary>,
-    scheduleSettings: ScheduleSettings,
+    persistedScheduleSettings: ScheduleSettings,
     appSettings: AppSettings,
     wallpaperMode: WallpaperMode,
     onToggleChanger: (Boolean) -> Unit,
@@ -81,12 +81,21 @@ fun WallpaperScreen(
     var showAlbumSelectionSheet by rememberSaveable { mutableStateOf(false) }
     var albumSelectionContext by rememberSaveable { mutableStateOf(AlbumSelectionContext.BOTH) }
     var showEmptyAlbumWarning by rememberSaveable { mutableStateOf(false) }
+    var scheduleSettings by remember { mutableStateOf(persistedScheduleSettings) }
+
+    // Keep an immediate local draft so a slider value waiting for the ViewModel debounce
+    // is included in a switch or other setting changed before that debounce expires.
+    LaunchedEffect(persistedScheduleSettings) {
+        scheduleSettings = persistedScheduleSettings
+    }
 
     fun updateSettingsDebounced(newSettings: ScheduleSettings) {
+        scheduleSettings = newSettings
         onUpdateScheduleSettingsDebounced(newSettings)
     }
 
     fun updateSettingsImmediate(newSettings: ScheduleSettings) {
+        scheduleSettings = newSettings
         onUpdateScheduleSettings(newSettings)
     }
 
@@ -107,41 +116,6 @@ fun WallpaperScreen(
     val liveAlbum by remember(albums, scheduleSettings.liveAlbumId) {
         derivedStateOf {
             scheduleSettings.liveAlbumId?.let { id -> albums.find { it.id == id } }
-        }
-    }
-
-    // Whether every enabled screen has an album selected - the precondition for the changer to run
-    // Use IDs as source of truth - if ID is set, we trust it's valid
-    // The ID will only be cleared when user explicitly deselects, not due to loading race conditions
-    val allRequiredAlbumsSet = if (wallpaperMode == WallpaperMode.STATIC) {
-        when {
-            homeEnabled && lockEnabled -> {
-                // Both are enabled, require both album IDs to be set
-                scheduleSettings.homeAlbumId != null && scheduleSettings.lockAlbumId != null
-            }
-            homeEnabled -> {
-                // Only home is enabled, require home album ID to be set
-                scheduleSettings.homeAlbumId != null
-            }
-            lockEnabled -> {
-                // Only lock is enabled, require lock album ID to be set
-                scheduleSettings.lockAlbumId != null
-            }
-            else -> false // Neither enabled, should be disabled
-        }
-    } else {
-        // Live mode: require live album ID to be set
-        scheduleSettings.liveAlbumId != null
-    }
-
-    // Auto-disable the changer when a required album is no longer selected. Never auto-enable
-    // here: this runs on every app open and would silently undo a pause (e.g. from the
-    // home-screen widget) and kick off a fresh schedule, changing the wallpaper immediately.
-    // The changer is only enabled by explicit user actions: selecting an album, tapping the
-    // widget, or the pause/resume button below.
-    LaunchedEffect(allRequiredAlbumsSet, scheduleSettings.enableChanger) {
-        if (!allRequiredAlbumsSet && scheduleSettings.enableChanger) {
-            onToggleChanger(false)
         }
     }
 
@@ -502,6 +476,27 @@ fun WallpaperScreen(
             scheduleSettings.liveAlbumId != null
         }
 
+        val allRequiredAlbumsSelected = if (wallpaperMode == WallpaperMode.STATIC) {
+            when {
+                homeEnabled && lockEnabled ->
+                    scheduleSettings.homeAlbumId != null && scheduleSettings.lockAlbumId != null
+                homeEnabled -> scheduleSettings.homeAlbumId != null
+                lockEnabled -> scheduleSettings.lockAlbumId != null
+                else -> false
+            }
+        } else {
+            scheduleSettings.liveAlbumId != null
+        }
+
+        if (allRequiredAlbumsSelected) {
+            SettingSwitchItem(
+                title = stringResource(R.string.wallpaper_changer),
+                description = stringResource(R.string.wallpaper_changer_description),
+                checked = scheduleSettings.enableChanger,
+                onCheckedChange = onToggleChanger
+            )
+        }
+
         // Time interval pickers (only show if album is selected)
         if (hasAlbumSelected) {
             if (wallpaperMode == WallpaperMode.STATIC) {
@@ -549,11 +544,18 @@ fun WallpaperScreen(
                 TimeIntervalPicker(
                     title = stringResource(R.string.interval_text),
                     minutes = scheduleSettings.liveIntervalMinutes,
+                    minimumMinutes = Constants.MIN_LIVE_INTERVAL_MINUTES,
                     onMinutesChange = { minutes ->
                         onUpdateScheduleSettings(
                             scheduleSettings.copy(liveIntervalMinutes = minutes)
                         )
                     }
+                )
+                Text(
+                    text = stringResource(R.string.live_short_interval_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = AppSpacing.large)
                 )
             }
         }
@@ -670,34 +672,19 @@ fun WallpaperScreen(
             }
         }
 
-        // Change wallpaper now + pause/resume automatic changes
-        if (allRequiredAlbumsSet) {
-            if (scheduleSettings.enableChanger) {
-                Button(
-                    onClick = onChangeWallpaperNow,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
-                ) {
-                    Text(text = stringResource(R.string.change_wallpaper_now))
-                }
-                OutlinedButton(
-                    onClick = { onToggleChanger(false) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
-                ) {
-                    Text(text = stringResource(R.string.pause_wallpaper_changes))
-                }
-            } else {
-                Button(
-                    onClick = { onToggleChanger(true) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PaddingValues(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall))
-                ) {
-                    Text(text = stringResource(R.string.resume_wallpaper_changes))
-                }
+        if (hasAlbumSelected) {
+            Button(
+                onClick = onChangeWallpaperNow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        PaddingValues(
+                            horizontal = AppSpacing.small,
+                            vertical = AppSpacing.extraSmall
+                        )
+                    )
+            ) {
+                Text(text = stringResource(R.string.change_wallpaper_now))
             }
         }
 
@@ -778,9 +765,32 @@ fun WallpaperScreen(
                             )
                         }
                     },
-                    // Show separate sliders only when both enabled AND separate schedules is on (Static only)
-                    bothEnabled = wallpaperMode == WallpaperMode.STATIC && homeEnabled && lockEnabled && scheduleSettings.separateSchedules,
-                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) scheduleSettings.homeEffects.darkenPercentage else scheduleSettings.liveEffects.darkenPercentage,
+                    homeChecked = scheduleSettings.homeEffects.enableDarken,
+                    lockChecked = scheduleSettings.lockEffects.enableDarken,
+                    onHomeCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                homeEffects = scheduleSettings.homeEffects.copy(
+                                    enableDarken = enabled
+                                )
+                            )
+                        )
+                    },
+                    onLockCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                lockEffects = scheduleSettings.lockEffects.copy(
+                                    enableDarken = enabled
+                                )
+                            )
+                        )
+                    },
+                    bothEnabled = wallpaperMode == WallpaperMode.STATIC &&
+                        homeEnabled && lockEnabled,
+                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) {
+                        if (homeEnabled) scheduleSettings.homeEffects.darkenPercentage
+                        else scheduleSettings.lockEffects.darkenPercentage
+                    } else scheduleSettings.liveEffects.darkenPercentage,
                     lockPercentage = scheduleSettings.lockEffects.darkenPercentage,
                     onPercentageChange = { homePercent, lockPercent ->
                         if (wallpaperMode == WallpaperMode.STATIC) {
@@ -829,9 +839,32 @@ fun WallpaperScreen(
                             )
                         }
                     },
-                    // Show separate sliders only when both enabled AND separate schedules is on (Static only)
-                    bothEnabled = wallpaperMode == WallpaperMode.STATIC && homeEnabled && lockEnabled && scheduleSettings.separateSchedules,
-                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) scheduleSettings.homeEffects.blurPercentage else scheduleSettings.liveEffects.blurPercentage,
+                    homeChecked = scheduleSettings.homeEffects.enableBlur,
+                    lockChecked = scheduleSettings.lockEffects.enableBlur,
+                    onHomeCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                homeEffects = scheduleSettings.homeEffects.copy(
+                                    enableBlur = enabled
+                                )
+                            )
+                        )
+                    },
+                    onLockCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                lockEffects = scheduleSettings.lockEffects.copy(
+                                    enableBlur = enabled
+                                )
+                            )
+                        )
+                    },
+                    bothEnabled = wallpaperMode == WallpaperMode.STATIC &&
+                        homeEnabled && lockEnabled,
+                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) {
+                        if (homeEnabled) scheduleSettings.homeEffects.blurPercentage
+                        else scheduleSettings.lockEffects.blurPercentage
+                    } else scheduleSettings.liveEffects.blurPercentage,
                     lockPercentage = scheduleSettings.lockEffects.blurPercentage,
                     onPercentageChange = { homePercent, lockPercent ->
                         if (wallpaperMode == WallpaperMode.STATIC) {
@@ -880,9 +913,32 @@ fun WallpaperScreen(
                             )
                         }
                     },
-                    // Show separate sliders only when both enabled AND separate schedules is on (Static only)
-                    bothEnabled = wallpaperMode == WallpaperMode.STATIC && homeEnabled && lockEnabled && scheduleSettings.separateSchedules,
-                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) scheduleSettings.homeEffects.vignettePercentage else scheduleSettings.liveEffects.vignettePercentage,
+                    homeChecked = scheduleSettings.homeEffects.enableVignette,
+                    lockChecked = scheduleSettings.lockEffects.enableVignette,
+                    onHomeCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                homeEffects = scheduleSettings.homeEffects.copy(
+                                    enableVignette = enabled
+                                )
+                            )
+                        )
+                    },
+                    onLockCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                lockEffects = scheduleSettings.lockEffects.copy(
+                                    enableVignette = enabled
+                                )
+                            )
+                        )
+                    },
+                    bothEnabled = wallpaperMode == WallpaperMode.STATIC &&
+                        homeEnabled && lockEnabled,
+                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) {
+                        if (homeEnabled) scheduleSettings.homeEffects.vignettePercentage
+                        else scheduleSettings.lockEffects.vignettePercentage
+                    } else scheduleSettings.liveEffects.vignettePercentage,
                     lockPercentage = scheduleSettings.lockEffects.vignettePercentage,
                     onPercentageChange = { homePercent, lockPercent ->
                         if (wallpaperMode == WallpaperMode.STATIC) {
@@ -931,9 +987,32 @@ fun WallpaperScreen(
                             )
                         }
                     },
-                    // Show separate sliders only when both enabled AND separate schedules is on (Static only)
-                    bothEnabled = wallpaperMode == WallpaperMode.STATIC && homeEnabled && lockEnabled && scheduleSettings.separateSchedules,
-                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) scheduleSettings.homeEffects.grayscalePercentage else scheduleSettings.liveEffects.grayscalePercentage,
+                    homeChecked = scheduleSettings.homeEffects.enableGrayscale,
+                    lockChecked = scheduleSettings.lockEffects.enableGrayscale,
+                    onHomeCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                homeEffects = scheduleSettings.homeEffects.copy(
+                                    enableGrayscale = enabled
+                                )
+                            )
+                        )
+                    },
+                    onLockCheckedChange = { enabled ->
+                        updateSettingsImmediate(
+                            scheduleSettings.copy(
+                                lockEffects = scheduleSettings.lockEffects.copy(
+                                    enableGrayscale = enabled
+                                )
+                            )
+                        )
+                    },
+                    bothEnabled = wallpaperMode == WallpaperMode.STATIC &&
+                        homeEnabled && lockEnabled,
+                    homePercentage = if (wallpaperMode == WallpaperMode.STATIC) {
+                        if (homeEnabled) scheduleSettings.homeEffects.grayscalePercentage
+                        else scheduleSettings.lockEffects.grayscalePercentage
+                    } else scheduleSettings.liveEffects.grayscalePercentage,
                     lockPercentage = scheduleSettings.lockEffects.grayscalePercentage,
                     onPercentageChange = { homePercent, lockPercent ->
                         if (wallpaperMode == WallpaperMode.STATIC) {

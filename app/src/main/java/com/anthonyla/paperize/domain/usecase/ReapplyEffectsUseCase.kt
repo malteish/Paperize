@@ -31,9 +31,15 @@ class ReapplyEffectsUseCase @Inject constructor(
     private val wallpaperRepository: WallpaperRepository,
     private val settingsRepository: SettingsRepository
 ) {
-    suspend operator fun invoke(albumId: String, screenType: ScreenType): Result<Bitmap> {
+    suspend operator fun invoke(
+        albumId: String,
+        screenType: ScreenType,
+        wallpaperId: String? = null
+    ): Result<Bitmap> {
         return try {
-            val current = wallpaperRepository.getCurrentWallpaper(albumId, screenType)
+            val current = wallpaperId
+                ?.let { wallpaperRepository.getWallpaperById(it) }
+                ?: wallpaperRepository.getCurrentWallpaper(albumId, screenType)
                 ?: return Result.Error(Exception(context.getString(R.string.error_no_valid_wallpaper_after_retries)))
 
             val settings = settingsRepository.getScheduleSettings()
@@ -56,7 +62,13 @@ class ReapplyEffectsUseCase @Inject constructor(
                 return Result.Error(Exception(context.getString(R.string.error_no_valid_wallpaper_after_retries)))
             }
 
-            val bitmap = retrieveBitmap(context, uri, screenSize.width, screenSize.height, scaling)
+            val bitmap = retrieveBitmap(
+                context,
+                uri,
+                screenSize.width,
+                screenSize.height,
+                scaling
+            )
                 ?: return Result.Error(Exception(context.getString(R.string.error_no_valid_wallpaper_after_retries)))
 
             var processed: Bitmap? = null

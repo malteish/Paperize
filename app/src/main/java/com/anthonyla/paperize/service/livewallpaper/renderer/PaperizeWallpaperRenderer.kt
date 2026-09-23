@@ -120,6 +120,10 @@ class PaperizeWallpaperRenderer(
     // Adaptive brightness (from ScheduleSettings)
     @Volatile private var adaptiveBrightnessEnabled = false
 
+    // Retain the current source so a fold/unfold or other surface-size change can
+    // decode the same wallpaper again at the new native resolution.
+    @Volatile private var currentImageLoader: ImageLoader? = null
+
     // Matrices
     private val mvpMatrix = FloatArray(16)
     private val projectionMatrix = FloatArray(16)
@@ -156,6 +160,10 @@ class PaperizeWallpaperRenderer(
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         Log.d(TAG, "onSurfaceChanged: ${width}x${height}")
 
+        val sizeChanged =
+            surfaceWidth > 0 &&
+                surfaceHeight > 0 &&
+                (surfaceWidth != width || surfaceHeight != height)
         surfaceWidth = width
         surfaceHeight = height
 
@@ -163,6 +171,13 @@ class PaperizeWallpaperRenderer(
 
         // Recreate framebuffers for blur at new resolution
         createBlurFramebuffers(width, height)
+
+        if (sizeChanged) {
+            currentImageLoader?.let { loader ->
+                Log.d(TAG, "Surface size changed; reloading current wallpaper at ${width}x${height}")
+                queueWallpaper(loader, skipCrossfade = true)
+            }
+        }
     }
 
     override fun onDrawFrame(gl: GL10) {
@@ -190,9 +205,13 @@ class PaperizeWallpaperRenderer(
         }
 
         // Draw current picture
+        val crossfadeAlphas = GLGeometry.calculateCrossfadeAlphas(
+            progress = crossfadeProgress,
+            hasNextPicture = next != null
+        )
+
         current?.let { picture ->
-            val alpha = if (next != null) 1.0f - crossfadeProgress else 1.0f
-            drawPictureWithEffects(picture, alpha, blurRadius)
+            drawPictureWithEffects(picture, crossfadeAlphas.current, blurRadius)
         }
 
         // Draw next picture (if crossfading)
@@ -203,7 +222,7 @@ class PaperizeWallpaperRenderer(
             }
 
             // Draw next picture with its own alpha
-            drawPictureWithEffects(picture, crossfadeProgress, blurRadius)
+            drawPictureWithEffects(picture, crossfadeAlphas.next, blurRadius)
 
             // Update crossfade progress using time-based calculation
             // This ensures consistent animation duration regardless of refresh rate (60Hz, 90Hz, 120Hz, etc.)
@@ -297,7 +316,7 @@ class PaperizeWallpaperRenderer(
             uGrayscaleFactorHandle,
             if (currentEffects.enableGrayscale) currentEffects.grayscalePercentage / Constants.PERCENTAGE_DIVISOR else 0f
         )
-        GLES20.glUniform1f(uAdaptiveBrightnessFactorHandle, picture.brightnessFactor)
+        GLES20.glUniform1f(uAdaptiveBrightnessFactorHandle, adaptiveBrightnessFactor(picture))
 
         // Bind the fully blurred texture as input
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
@@ -328,7 +347,7 @@ class PaperizeWallpaperRenderer(
             uGrayscaleFactorHandle,
             if (currentEffects.enableGrayscale) currentEffects.grayscalePercentage / Constants.PERCENTAGE_DIVISOR else 0f
         )
-        GLES20.glUniform1f(uAdaptiveBrightnessFactorHandle, picture.brightnessFactor)
+        GLES20.glUniform1f(uAdaptiveBrightnessFactorHandle, adaptiveBrightnessFactor(picture))
 
         picture.draw(effectsProgram, aPositionHandle, aTexCoordHandle, mvpMatrix, uMvpMatrixHandle)
     }
@@ -347,67 +366,16 @@ class PaperizeWallpaperRenderer(
             return
         }
 
-        // 1. Calculate scale based on ScalingType
-        val scaleX = viewWidth / imageWidth
-        val scaleY = viewHeight / imageHeight
-
-        val (finalScaleX, finalScaleY) = when (currentScalingType) {
-            ScalingType.FILL -> {
-                val scale = kotlin.math.max(scaleX, scaleY)
-                Pair(scale, scale)
-            }
-            ScalingType.FIT -> {
-                val scale = kotlin.math.min(scaleX, scaleY)
-                Pair(scale, scale)
-            }
-            ScalingType.STRETCH -> {
-                Pair(scaleX, scaleY)
-            }
-            ScalingType.NONE -> {
-                Pair(1f, 1f)
-            }
-        }
-
-        var effectiveScaleX = finalScaleX
-        var effectiveScaleY = finalScaleY
-
-        val parallaxEnabled = currentEffects.enableParallax && currentEffects.parallaxIntensity > 0
-        val parallaxIntensity = if (parallaxEnabled) currentEffects.parallaxIntensity / 100f else 0f
-
-        // If parallax is enabled, ensure we have enough width to scroll (overscan).
-        // If image fits perfectly, apply artificial zoom based on intensity.
-        if (parallaxEnabled) {
-            val currentWidth = imageWidth * effectiveScaleX
-            // Target at least 20% overscan at max intensity
-            val minExtraWidth = viewWidth * parallaxIntensity * 0.2f
-            
-            if ((currentWidth - viewWidth) < minExtraWidth) {
-                // Zoom in to create scrollable area
-                val targetWidth = viewWidth + minExtraWidth
-                // Prevent division by zero
-                if (currentWidth > 0) {
-                    val zoomFactor = targetWidth / currentWidth
-                    effectiveScaleX *= zoomFactor
-                    effectiveScaleY *= zoomFactor
-                }
-            }
-        }
-
-        val scaledWidth = imageWidth * effectiveScaleX
-        val scaledHeight = imageHeight * effectiveScaleY
-
-        // 2. Calculate parallax offset
-        // Available scroll range is the difference between scaled image width and screen width
-        val extraWidth = kotlin.math.max(0f, scaledWidth - viewWidth)
-        
-        // Calculate offset based on scroll position (0.0 = left, 1.0 = right)
-        // Center (0.5) is 0 offset
-        // Reverting to: `maxParallaxOffset = extraWidth`.
-        // And relying on the "Zoom" logic to create that width if needed.
-        val maxParallaxOffset = extraWidth
-        val parallaxOffset = maxParallaxOffset * (0.5f - normalOffsetX)
-        
-        // Verbose logging removed to avoid per-frame log spam
+        val transform = GLGeometry.calculateWallpaperTransform(
+            viewWidth = viewWidth,
+            viewHeight = viewHeight,
+            imageWidth = imageWidth,
+            imageHeight = imageHeight,
+            scalingType = currentScalingType,
+            parallaxEnabled = currentEffects.enableParallax,
+            parallaxIntensity = currentEffects.parallaxIntensity,
+            normalizedOffsetX = normalOffsetX
+        )
 
         // 3. Construct Matrix
         // We use an orthographic projection matching the screen dimensions
@@ -423,12 +391,18 @@ class PaperizeWallpaperRenderer(
 
         // Apply Model transformations
         // Translate for parallax
-        Matrix.translateM(matrix, 0, parallaxOffset, 0f, 0f)
+        Matrix.translateM(matrix, 0, transform.horizontalOffset, 0f, 0f)
         
         // Scale to match image size * crop scale
         // The quad is -1 to 1 (size 2), so we need to scale it to match image dimensions
         // Actually, we want to map the quad (-1..1) to the image size (-w/2..w/2)
-        Matrix.scaleM(matrix, 0, scaledWidth / 2f, scaledHeight / 2f, 1f)
+        Matrix.scaleM(
+            matrix,
+            0,
+            transform.scaledWidth / 2f,
+            transform.scaledHeight / 2f,
+            1f
+        )
     }
 
     /**
@@ -603,17 +577,15 @@ class PaperizeWallpaperRenderer(
                         return@launch
                     }
 
-                    // Calculate adaptive brightness if enabled
-                    val brightnessFactor = if (adaptiveBrightnessEnabled) {
-                        val brightness = com.anthonyla.paperize.core.util.calculateBitmapBrightness(bitmap)
-                        com.anthonyla.paperize.core.util.getAdaptiveBrightnessMultiplier(context, brightness)
-                    } else {
-                        1.0f
-                    }
+                    // Always retain source luminance. Whether adaptive brightness is enabled
+                    // is evaluated at draw time so settings changes are immediate and do not
+                    // advance the wallpaper queue.
+                    val sourceBrightness =
+                        com.anthonyla.paperize.core.util.calculateBitmapBrightness(bitmap)
 
                     // Upload to GPU on GL thread
                     callbacks.queueEventOnGlThread {
-                        uploadBitmap(bitmap, brightnessFactor, skipCrossfade)
+                        uploadBitmap(bitmap, sourceBrightness, imageLoader, skipCrossfade)
                     }
                 } else {
                     Log.w(TAG, "Failed to load wallpaper (null bitmap)")
@@ -659,10 +631,16 @@ class PaperizeWallpaperRenderer(
      * Must be called on GL thread.
      *
      * @param bitmap The bitmap to upload
-     * @param brightnessFactor The adaptive brightness multiplier for this bitmap
+     * @param sourceBrightness Luminance of the unmodified source bitmap
+     * @param imageLoader Source used to reproduce this bitmap after a surface resize
      * @param skipCrossfade If true, instantly replace current wallpaper without animation
      */
-    private fun uploadBitmap(bitmap: Bitmap, brightnessFactor: Float, skipCrossfade: Boolean = false) {
+    private fun uploadBitmap(
+        bitmap: Bitmap,
+        sourceBrightness: Float,
+        imageLoader: ImageLoader,
+        skipCrossfade: Boolean = false
+    ) {
         // Validate bitmap before processing
         if (bitmap.isRecycled) {
             Log.e(TAG, "Cannot upload recycled bitmap")
@@ -675,7 +653,8 @@ class PaperizeWallpaperRenderer(
         }
         
         try {
-            val picture = GLPicture(bitmap, brightnessFactor)
+            val picture = GLPicture(bitmap, sourceBrightness)
+            currentImageLoader = imageLoader
 
             // Recycle bitmap (no longer needed after GPU upload)
             bitmap.recycle()
@@ -734,8 +713,9 @@ class PaperizeWallpaperRenderer(
      * @param offset Normalized offset (0.0 = left, 1.0 = right)
      */
     fun setNormalOffsetX(offset: Float) {
-        if (normalOffsetX != offset) {
-            normalOffsetX = offset
+        val clampedOffset = offset.coerceIn(0f, 1f)
+        if (normalOffsetX != clampedOffset) {
+            normalOffsetX = clampedOffset
             callbacks.requestRender()
         }
     }
@@ -745,9 +725,22 @@ class PaperizeWallpaperRenderer(
      * Can be called from any thread.
      */
     fun updateAdaptiveBrightness(enabled: Boolean) {
-        adaptiveBrightnessEnabled = enabled
-        Log.d(TAG, "Adaptive brightness updated: $enabled")
+        if (adaptiveBrightnessEnabled != enabled) {
+            adaptiveBrightnessEnabled = enabled
+            Log.d(TAG, "Adaptive brightness updated: $enabled")
+            callbacks.requestRender()
+        }
     }
+
+    private fun adaptiveBrightnessFactor(picture: GLPicture): Float =
+        if (adaptiveBrightnessEnabled) {
+            com.anthonyla.paperize.core.util.getAdaptiveBrightnessMultiplier(
+                context,
+                picture.sourceBrightness
+            )
+        } else {
+            1f
+        }
 
     /**
      * Update scaling type.
@@ -774,6 +767,7 @@ class PaperizeWallpaperRenderer(
 
         nextPicture?.recycle()
         nextPicture = null
+        currentImageLoader = null
 
         GLUtil.deleteProgram(simpleProgram)
         GLUtil.deleteProgram(blurHorizontalProgram)

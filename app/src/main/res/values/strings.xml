@@ -5,7 +5,6 @@
   <string name="import_adding_wallpapers">Adding wallpapers…</string>
   <string name="import_scanning">Scanning… %1$d found</string>
   <string name="import_saving">Saving %1$d / %2$d</string>
-  <string name="change_wallpaper_now">Change wallpaper now</string>
   <string name="widget_change_wallpaper_label">Change wallpaper</string>
   <string name="widget_change_wallpaper_description">Tap to change your wallpaper</string>
   <string name="dont_scroll_home">Don\'t scroll across home screens</string>
@@ -55,7 +54,7 @@
   <string name="privacy_intro_title">Introduction</string>
   <string name="privacy_intro_content">Welcome to %1$s! This privacy notice outlines how we collect, use, and protect your personal information when you use our mobile application. By using %1$s, you agree to the terms described in this notice.</string>
   <string name="privacy_data_collection_title">Data Collection</string>
-  <string name="privacy_data_collection_content">Notification Access: %1$s requests notification access to provide you with personalized wallpaper recommendations based on your notifications. We do not store any notification content or personally identifiable information (PII) outside of your device.\n\nLocal Files: %1$s accesses files stored on your device to allow you to set them as wallpapers. We do not upload or transfer these files to any external servers.</string>
+  <string name="privacy_data_collection_content">Notifications: %1$s requests permission to display its own wallpaper-change, background-operation, and error notifications. It does not read notifications from other apps or use them to recommend wallpapers.\n\nLocal Files: %1$s accesses the images and folders you select so it can set them as wallpapers. We do not upload or transfer these files to any external servers.</string>
   <string name="privacy_information_usage_title">Information Usage</string>
   <string name="privacy_information_usage_content">Personal Data: We do not collect or store any personal data such as names, email addresses, or phone numbers.\n\nUsage Analytics: %1$s does not track your usage behavior or collect analytics data.</string>
   <string name="privacy_data_security_title">Data Security</string>
@@ -93,7 +92,7 @@
   <string name="change_on_screen_off">Change on Screen Off</string>
   <string name="change_wallpaper_when_screen_turns_off">Change wallpaper when screen turns off</string>
   <string name="parallax_effect">Parallax Effect</string>
-  <string name="wallpaper_moves_with_screen_scroll">Wallpaper moves with screen scroll</string>
+  <string name="wallpaper_moves_with_screen_scroll">Swipe between home-screen pages to move the wallpaper (launcher support required)</string>
   <string name="live_wallpaper_name">Paperize Live Wallpaper</string>
   <string name="live_wallpaper_description">Dynamic wallpapers with effects and interactive features</string>
     <string name="adaptive_brightness">Adaptive Brightness</string>
@@ -107,10 +106,6 @@
   <string name="notification_permission_description">Allow Paperize to send notifications about wallpaper changes and when the app is running in the background. You can change this anytime in settings.</string>
   <string name="skip">Skip</string>
   <string name="permission_granted">Permission Granted</string>
-  <string name="storage_permission_title">Storage Access (Optional)</string>
-  <string name="storage_permission_description">Allow Paperize to access storage to preview your current wallpaper in the app.</string>
-  <string name="storage_permission_optional">This permission is optional. Paperize can still function normally without it, but you won\'t be able to see wallpaper previews.</string>
-  <string name="continue_without_storage">Continue Without Storage Access</string>
 
   <!-- Content Descriptions for Accessibility -->
   <string name="content_desc_clear_selection">Clear selection</string>
@@ -127,6 +122,10 @@
 
   <!-- UI Labels and Status -->
   <string name="enabled">Enabled</string>
+  <string name="wallpaper_changer">Wallpaper changing</string>
+  <string name="wallpaper_changer_description">Pause or resume scheduled changes without clearing your albums.</string>
+  <string name="horizontal_wallpaper_scrolling">Horizontal scrolling</string>
+  <string name="horizontal_wallpaper_scrolling_description">Allow wide Fill wallpapers to move between home-screen pages. Lock-screen wallpapers remain centered.</string>
   <string name="disabled">Disabled</string>
   <string name="lock_album_label">Lock Album</string>
   <string name="home_album_label">Home Album</string>
@@ -157,6 +156,7 @@
   <string name="mins">Mins</string>
   <string name="total_interval">Total: </string>
   <string name="time_unit_min">min</string>
+  <string name="live_short_interval_note">Intervals under 15 minutes run only while Paperize is the visible live wallpaper.</string>
 
     <!-- Notification Service -->
   <string name="notification_channel_description">Wallpaper change notifications</string>
@@ -166,6 +166,8 @@
   <!-- Error Messages -->
   <string name="error_failed_to_build_queue">Failed to build wallpaper queue</string>
   <string name="error_no_valid_wallpaper_after_retries">Could not find a valid wallpaper after retries</string>
+  <string name="wallpaper_not_found">This wallpaper is no longer available.</string>
+  <string name="static_mode_required">Switch to static wallpaper mode before applying an individual wallpaper.</string>
 
     <!-- OEM Compatibility Warnings -->
   <string name="parallax_may_not_work">Parallax effect may not work with your OEM or launcher.</string>
@@ -218,6 +220,11 @@
   <string name="ignoring">Ignoring (Recommended)</string>
   <string name="optimizing">Optimizing (May delay changes)</string>
   <string name="reliability">Reliability</string>
+  <string name="change_wallpaper_now">Change wallpaper now</string>
+  <string name="set_wallpaper">Set wallpaper</string>
+  <string name="home_and_lock_screens">Home and lock screens</string>
+  <string name="individual_wallpaper_static_only">Switch to static mode to set an individual wallpaper.</string>
+  <string name="change_next_wallpaper_shortcut">Change to the next configured wallpaper</string>
 
   <string name="widget_pause_resume_label">Pause/resume wallpaper</string>
   <string name="widget_pause_resume_description">Tap to pause or resume automatic wallpaper changes</string>

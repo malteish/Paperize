@@ -26,7 +26,7 @@ class ScheduleSettingsTest {
         
         assertEquals(Constants.MIN_INTERVAL_MINUTES, validated.homeIntervalMinutes)
         assertEquals(Constants.MIN_INTERVAL_MINUTES, validated.lockIntervalMinutes)
-        assertEquals(Constants.MIN_INTERVAL_MINUTES, validated.liveIntervalMinutes)
+        assertEquals(Constants.MIN_LIVE_INTERVAL_MINUTES, validated.liveIntervalMinutes)
     }
 
     @Test
@@ -42,6 +42,15 @@ class ScheduleSettingsTest {
         assertEquals(60, validated.homeIntervalMinutes)
         assertEquals(120, validated.lockIntervalMinutes)
         assertEquals(30, validated.liveIntervalMinutes)
+    }
+
+    @Test
+    fun `visible live timer is used only below WorkManager minimum`() {
+        assertFalse(usesVisibleLiveTimer(0))
+        assertTrue(usesVisibleLiveTimer(1))
+        assertTrue(usesVisibleLiveTimer(14))
+        assertFalse(usesVisibleLiveTimer(15))
+        assertFalse(usesVisibleLiveTimer(60))
     }
 
     @Test
@@ -161,6 +170,14 @@ class ScheduleSettingsTest {
     }
 
     @Test
+    fun `hasDisplayChanges returns true when home scrolling changes`() {
+        val settings1 = ScheduleSettings(homeScrollingEnabled = false)
+        val settings2 = ScheduleSettings(homeScrollingEnabled = true)
+
+        assertTrue(settings1.hasDisplayChanges(settings2))
+    }
+
+    @Test
     fun `hasDisplayChanges returns true when homeEffects change`() {
         val settings1 = ScheduleSettings(homeEffects = WallpaperEffects(enableBlur = false))
         val settings2 = ScheduleSettings(homeEffects = WallpaperEffects(enableBlur = true))
@@ -227,6 +244,7 @@ class ScheduleSettingsTest {
         assertFalse(settings.shuffleEnabled)
         assertFalse(settings.homeEnabled)
         assertFalse(settings.lockEnabled)
+        assertTrue(settings.homeScrollingEnabled)
         assertNull(settings.homeAlbumId)
         assertNull(settings.lockAlbumId)
         assertEquals(Constants.DEFAULT_INTERVAL_MINUTES, settings.homeIntervalMinutes)
