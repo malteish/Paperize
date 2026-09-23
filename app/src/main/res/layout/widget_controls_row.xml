@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All three widget buttons side by side in a 2x1 widget.
+     Each slot splits the widget evenly and is its own tap target. The icons use
+     fitCenter instead of a fixed 56dp size: three 56dp icons do not fit the two cells of
+     a small launcher grid, and fitCenter keeps them circular at whatever size fits.
+     The pause/resume src is only the widget-picker preview default; the provider swaps
+     it to match the changer state. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/widget_change"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_widget_next"
+        android:contentDescription="@string/change_wallpaper_now" />
+
+    <ImageView
+        android:id="@+id/widget_pause_resume"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_widget_pause"
+        android:contentDescription="@string/pause_wallpaper_changes" />
+
+    <ImageView
+        android:id="@+id/widget_premium"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_widget_premium"
+        android:contentDescription="@string/copy_to_premium_folder" />
+
+</LinearLayout>

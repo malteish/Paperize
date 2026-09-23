@@ -93,7 +93,8 @@ class ChangeWallpaperWidgetProvider : AppWidgetProvider() {
         /** Explicit action fired by the widget's click PendingIntent. */
         private const val ACTION_WIDGET_TAP = "com.anthonyla.paperize.WIDGET_CHANGE_WALLPAPER"
 
-        private fun changePendingIntent(context: Context): PendingIntent {
+        /** Also used by the combined widgets, so a tap there runs this provider's handler. */
+        internal fun changePendingIntent(context: Context): PendingIntent {
             val intent = Intent(context, ChangeWallpaperWidgetProvider::class.java).apply {
                 action = ACTION_WIDGET_TAP
             }

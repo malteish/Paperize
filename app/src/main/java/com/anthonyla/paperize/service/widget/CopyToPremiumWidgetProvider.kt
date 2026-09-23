@@ -91,7 +91,8 @@ class CopyToPremiumWidgetProvider : AppWidgetProvider() {
         /** Explicit action fired by the widget's click PendingIntent. */
         private const val ACTION_WIDGET_TAP = "com.anthonyla.paperize.WIDGET_COPY_TO_PREMIUM"
 
-        private fun tapPendingIntent(context: Context): PendingIntent {
+        /** Also used by the combined widgets, so a tap there runs this provider's handler. */
+        internal fun tapPendingIntent(context: Context): PendingIntent {
             val intent = Intent(context, CopyToPremiumWidgetProvider::class.java).apply {
                 action = ACTION_WIDGET_TAP
             }

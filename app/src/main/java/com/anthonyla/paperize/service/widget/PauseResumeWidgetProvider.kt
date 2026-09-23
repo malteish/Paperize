@@ -96,6 +96,7 @@ class PauseResumeWidgetProvider : AppWidgetProvider() {
         // PaperizeApplication would also get there, just a broadcast round-trip later.
         val appWidgetManager = AppWidgetManager.getInstance(context)
         render(context, appWidgetManager, widgetIds(context, appWidgetManager), enabled)
+        ControlsWidgetProvider.requestRefreshAll(context)
     }
 
     private fun render(
@@ -130,10 +131,12 @@ class PauseResumeWidgetProvider : AppWidgetProvider() {
         private const val ACTION_WIDGET_TAP = "com.anthonyla.paperize.WIDGET_TOGGLE_CHANGER"
 
         /**
-         * Ask all placed instances of this widget to re-read the changer state and redraw.
+         * Ask all placed instances of this widget, and of the combined widgets that show the
+         * same toggle, to re-read the changer state and redraw.
          * No-op when no instance is on the home screen.
          */
         fun requestRefresh(context: Context) {
+            ControlsWidgetProvider.requestRefreshAll(context)
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val ids = widgetIds(context, appWidgetManager)
             if (ids.isEmpty()) return
@@ -149,7 +152,8 @@ class PauseResumeWidgetProvider : AppWidgetProvider() {
                 ComponentName(context, PauseResumeWidgetProvider::class.java)
             )
 
-        private fun tapPendingIntent(context: Context): PendingIntent {
+        /** Also used by the combined widgets, so a tap there runs this provider's handler. */
+        internal fun tapPendingIntent(context: Context): PendingIntent {
             val intent = Intent(context, PauseResumeWidgetProvider::class.java).apply {
                 action = ACTION_WIDGET_TAP
             }
