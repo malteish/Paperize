@@ -224,6 +224,12 @@
   <string name="pause_wallpaper_changes">Pause wallpaper changes</string>
   <string name="resume_wallpaper_changes">Resume wallpaper changes</string>
 
+  <!-- Combined widgets: all three buttons in one widget -->
+  <string name="widget_controls_row_label">Paperize controls (row)</string>
+  <string name="widget_controls_row_description">Change, pause/resume and copy-to-premium buttons side by side</string>
+  <string name="widget_controls_column_label">Paperize controls (column)</string>
+  <string name="widget_controls_column_description">Change, pause/resume and copy-to-premium buttons stacked</string>
+
   <!-- Copy-to-premium widget -->
   <string name="widget_copy_to_premium_label">Copy to premium folder</string>
   <string name="widget_copy_to_premium_description">Tap to copy the current wallpaper into your premium folder</string>
