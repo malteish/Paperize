@@ -114,7 +114,10 @@ class CopyToPremiumFolderUseCase @Inject constructor(
             ?: return CopyToPremiumFolderResult.FolderUnavailable
 
         val plan = PremiumFolderNaming.planCopy(
-            sourceName = wallpaper.displayFileName,
+            sourceName = PremiumFolderNaming.prefixedName(
+                wallpaper.displayFileName,
+                sourceParentFolder(sourceUri)
+            ),
             sourceSize = sourceSize,
             existing = existing
         )
@@ -200,6 +203,13 @@ class CopyToPremiumFolderUseCase @Inject constructor(
             Log.w(TAG, "Could not read the size of $uri", e)
         }
         return 0L
+    }
+
+    /** Parent folder of the source document, read from its path-shaped document id. */
+    private fun sourceParentFolder(sourceUri: Uri): String? = try {
+        PremiumFolderNaming.parentFolderName(DocumentsContract.getDocumentId(sourceUri))
+    } catch (_: IllegalArgumentException) {
+        null // Not a document URI
     }
 
     private fun queryDisplayName(uri: Uri): String? = try {

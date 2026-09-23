@@ -185,4 +185,51 @@ class PremiumFolderNamingTest {
 
         assertEquals("primary:", PremiumFolderNaming.folderDisplayName(uri))
     }
+
+    // ============================================================
+    // Test: prefixedName
+    // ============================================================
+
+    @Test
+    fun `prefixedName prepends the parent folder with an underscore`() {
+        assertEquals("path_image.jpg", PremiumFolderNaming.prefixedName("image.jpg", "path"))
+    }
+
+    @Test
+    fun `prefixedName keeps the plain name without a parent folder`() {
+        assertEquals("image.jpg", PremiumFolderNaming.prefixedName("image.jpg", null))
+        assertEquals("image.jpg", PremiumFolderNaming.prefixedName("image.jpg", " "))
+    }
+
+    @Test
+    fun `prefixedName sanitizes illegal characters in the folder name`() {
+        assertEquals("a_b_image.jpg", PremiumFolderNaming.prefixedName("image.jpg", "a?b"))
+    }
+
+    // ============================================================
+    // Test: parentFolderName
+    // ============================================================
+
+    @Test
+    fun `parentFolderName reads the direct parent of an external storage id`() {
+        assertEquals("path", PremiumFolderNaming.parentFolderName("primary:some/path/image.jpg"))
+    }
+
+    @Test
+    fun `parentFolderName reads the direct parent of a raw downloads id`() {
+        assertEquals(
+            "Download",
+            PremiumFolderNaming.parentFolderName("raw:/storage/emulated/0/Download/image.jpg")
+        )
+    }
+
+    @Test
+    fun `parentFolderName returns null for a file at the volume root`() {
+        assertNull(PremiumFolderNaming.parentFolderName("primary:image.jpg"))
+    }
+
+    @Test
+    fun `parentFolderName returns null for an opaque media id`() {
+        assertNull(PremiumFolderNaming.parentFolderName("image:1234"))
+    }
 }

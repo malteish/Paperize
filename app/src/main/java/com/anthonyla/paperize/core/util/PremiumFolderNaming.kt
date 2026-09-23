@@ -68,6 +68,34 @@ object PremiumFolderNaming {
     }
 
     /**
+     * Build the premium-folder name for a source file: its parent folder's name, an
+     * underscore, then its own name, so `/some/path/image.jpg` becomes `path_image.jpg`.
+     * Without a known [parentFolder] the plain [sourceName] is used.
+     */
+    fun prefixedName(sourceName: String, parentFolder: String?): String {
+        val baseName = sanitizeFileName(sourceName)
+        if (parentFolder.isNullOrBlank()) return baseName
+        val prefix = sanitizeFileName(parentFolder)
+        if (prefix == FALLBACK_NAME) return baseName
+        return "${prefix}_$baseName"
+    }
+
+    /**
+     * Name of the folder directly containing the document [documentId] (as returned by
+     * `DocumentsContract.getDocumentId`), or null when the id carries no path.
+     *
+     * Path-shaped ids come from the external storage provider (`primary:Pictures/Cats/a.jpg`)
+     * and the downloads provider (`raw:/storage/emulated/0/Download/a.jpg`). Opaque ids such
+     * as the media provider's `image:1234`, or a file at the volume root (`primary:a.jpg`),
+     * have no parent folder to report.
+     */
+    fun parentFolderName(documentId: String): String? {
+        val path = documentId.substringAfter(':', documentId).trimEnd('/')
+        if ('/' !in path) return null
+        return path.substringBeforeLast('/').substringAfterLast('/').trim().ifEmpty { null }
+    }
+
+    /**
      * Reduce a source display name to something a document provider will accept: the last
      * path segment only, with characters that are illegal on FAT/exFAT replaced by `_`.
      */
