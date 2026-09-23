@@ -62,6 +62,7 @@ fun SettingsScreen(
 
     // Premium folder picker. Read *and* write permission is persisted: the copy-to-premium
     // widget has to create files in this tree long after the picker activity is gone.
+    val premiumFolderUnavailable = stringResource(R.string.premium_folder_unavailable)
     val premiumFolderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -74,7 +75,7 @@ fun SettingsScreen(
             } catch (_: Exception) {
                 Toast.makeText(
                     context,
-                    context.getString(R.string.premium_folder_unavailable),
+                    premiumFolderUnavailable,
                     Toast.LENGTH_SHORT
                 ).show()
             }

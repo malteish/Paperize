@@ -21,14 +21,17 @@ import android.graphics.RadialGradient
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.Shader
+import android.hardware.display.DisplayManager
 import android.hardware.HardwareBuffer
 import android.media.ImageReader
 import android.net.Uri
 import android.util.Log
 import android.util.Size
+import android.view.Display
 import android.view.WindowManager
 import android.view.WindowMetrics
 import androidx.compose.ui.util.fastRoundToInt
+import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import com.anthonyla.paperize.core.ScalingType
 import com.anthonyla.paperize.core.WallpaperMediaType
@@ -45,6 +48,8 @@ import com.anthonyla.paperize.core.WallpaperMediaType
  */
 
 private const val TAG = "WallpaperUtil"
+private const val BUILT_IN_DISPLAY_CATEGORY =
+    "android.hardware.display.category.BUILT_IN_DISPLAYS"
 
 /**
  * Get EXIF orientation from URI
@@ -126,22 +131,70 @@ object ScreenMetricsCompat {
     fun getScreenSize(context: Context): Size {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val metrics: WindowMetrics = windowManager.currentWindowMetrics
-        return Size(metrics.bounds.width(), metrics.bounds.height())
+        val currentWindow = metrics.bounds.width() to metrics.bounds.height()
+
+        // Display.Mode dimensions are reported in the panel's natural orientation. Prefer them
+        // over currentWindowMetrics so a scheduled change while a landscape game is foregrounded
+        // cannot permanently rotate and over-crop the wallpaper bitmap.
+        val displayManager = context.getSystemService(DisplayManager::class.java)
+        val builtInDisplays = displayManager
+            ?.getDisplays(BUILT_IN_DISPLAY_CATEGORY)
+            .orEmpty()
+        val candidateDisplays = if (builtInDisplays.isNotEmpty()) {
+            // Android 17+ returns all built-in panels, including currently inactive panels.
+            builtInDisplays.asSequence()
+        } else {
+            // Compatibility fallback for releases where the built-in category is unknown.
+            // Exclude presentation and app-owned virtual displays.
+            displayManager?.displays
+                ?.asSequence()
+                ?.filter { display ->
+                    display.flags and Display.FLAG_PRESENTATION == 0 &&
+                        display.flags and Display.FLAG_PRIVATE == 0
+                }
+                .orEmpty()
+        }
+        val supportedModes = candidateDisplays
+            .flatMap { display ->
+                display.supportedModes.asSequence().map { mode ->
+                    mode.physicalWidth to mode.physicalHeight
+                }
+            }
+            .toList()
+        val selected = selectWallpaperDisplayDimensions(currentWindow, supportedModes)
+        return Size(selected.first, selected.second)
     }
 }
 
+/** Prefer stable natural-orientation panel modes, falling back to the current window if needed. */
+internal fun selectWallpaperDisplayDimensions(
+    currentWindow: Pair<Int, Int>,
+    supportedModes: Iterable<Pair<Int, Int>>
+): Pair<Int, Int> = selectLargestDisplayDimensions(supportedModes)
+    ?: currentWindow.takeIf { (width, height) -> width > 0 && height > 0 }
+    ?: (1 to 1)
+
 /**
- * Get device screen size with orientation
+ * Select the highest-resolution display dimensions.
+ *
+ * Kept platform-independent so foldable sizing behavior is covered by local unit tests.
  */
-fun getDeviceScreenSize(context: Context): Size {
-    val orientation = context.resources.configuration.orientation
-    val size = ScreenMetricsCompat.getScreenSize(context)
-    return if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-        Size(minOf(size.width, size.height), maxOf(size.width, size.height))
-    } else {
-        Size(maxOf(size.width, size.height), minOf(size.width, size.height))
-    }
-}
+internal fun selectLargestDisplayDimensions(
+    candidates: Iterable<Pair<Int, Int>>
+): Pair<Int, Int>? = candidates
+    .filter { (width, height) -> width > 0 && height > 0 }
+    .maxWithOrNull(
+        compareBy<Pair<Int, Int>>(
+            { (width, height) -> width.toLong() * height.toLong() },
+            { (width, height) -> maxOf(width, height) },
+            { (width, height) -> minOf(width, height) }
+        )
+    )
+
+/**
+ * Get the stable natural-orientation size of the largest built-in display panel.
+ */
+fun getDeviceScreenSize(context: Context): Size = ScreenMetricsCompat.getScreenSize(context)
 
 /** Width multiplier for the home parallax canvas when scrolling is enabled. */
 private const val HOME_PARALLAX_WIDTH_FACTOR = 2
@@ -217,7 +270,8 @@ fun retrieveBitmap(
     wallpaperUri: Uri,
     width: Int,
     height: Int,
-    scaling: ScalingType = ScalingType.FIT
+    scaling: ScalingType = ScalingType.FIT,
+    preserveSourceOverflow: Boolean = false
 ): Bitmap? {
     // ImageDecoder auto-applies EXIF orientation; info.size is the post-EXIF display size.
     // No separate getImageDimensions() call needed — saves 1-2 stream opens per wallpaper.
@@ -237,7 +291,7 @@ fun retrieveBitmap(
                     val targetW = (srcWidth * scale).fastRoundToInt()
                     val targetH = (srcHeight * scale).fastRoundToInt()
                     decoder.setTargetSize(targetW, targetH)
-                    if (targetW > width || targetH > height) {
+                    if (!preserveSourceOverflow && (targetW > width || targetH > height)) {
                         val cropX = ((targetW - width) / 2).coerceAtLeast(0)
                         val cropY = ((targetH - height) / 2).coerceAtLeast(0)
                         decoder.setCrop(android.graphics.Rect(
@@ -309,7 +363,37 @@ fun retrieveBitmap(
     //   FIT   → decoded bitmap may be narrower/shorter than canvas; center on black canvas.
     //   NONE  → original-size image may be smaller than canvas; center on black canvas.
     //   STRETCH → decoder was told the exact canvas size; no-op.
-    return oriented?.let { finalizeToCanvas(it, width, height, scaling) }
+    return oriented?.let {
+        if (preserveSourceOverflow && scaling == ScalingType.FILL) {
+            scaleToFillPreservingOverflow(it, width, height)
+        } else {
+            finalizeToCanvas(it, width, height, scaling)
+        }
+    }
+}
+
+/**
+ * Scale [source] just enough to cover one screen while retaining any overflow.
+ *
+ * The returned bitmap may be wider than [width] or taller than [height]. That overflow is what a
+ * launcher uses to scroll a static wallpaper without moving past the source image's real edge.
+ */
+private fun scaleToFillPreservingOverflow(
+    source: Bitmap,
+    width: Int,
+    height: Int
+): Bitmap {
+    val scale = maxOf(
+        width.toFloat() / source.width,
+        height.toFloat() / source.height
+    )
+    val targetW = (source.width * scale).fastRoundToInt()
+    val targetH = (source.height * scale).fastRoundToInt()
+    if (targetW == source.width && targetH == source.height) return source
+
+    val scaled = source.scale(targetW, targetH)
+    if (scaled !== source) source.recycle()
+    return scaled
 }
 
 /**
@@ -634,39 +718,6 @@ fun getAdaptiveBrightnessMultiplier(context: Context, brightness: Float): Float 
         Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     
     return BrightnessCalculator.getAdaptiveMultiplier(isDarkMode, brightness)
-}
-
-/**
- * Set [bitmap] as the wallpaper for [which] screen(s) without going through
- * [WallpaperManager.setBitmap].
- *
- * setBitmap() PNG-encodes the whole bitmap on the calling thread before streaming it to
- * the system; for a parallax-sized canvas that encode alone takes seconds and dominates
- * the latency of a wallpaper change. Encoding to lossless WebP at low effort ourselves
- * and handing the bytes to [WallpaperManager.setStream] produces pixel-identical output
- * several times faster. (Plain JPEG would be faster still, but its chroma subsampling
- * visibly dulls vivid photos.) Falls back to setBitmap() if the stream path fails.
- */
-fun setWallpaperFast(wallpaperManager: WallpaperManager, bitmap: Bitmap, which: Int) {
-    try {
-        val start = android.os.SystemClock.elapsedRealtime()
-        val bytes = java.io.ByteArrayOutputStream(bitmap.byteCount / 8).also { buffer ->
-            if (!bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, Constants.WALLPAPER_WEBP_EFFORT, buffer)) {
-                throw IllegalStateException("WebP encode failed")
-            }
-        }.toByteArray()
-        val encoded = android.os.SystemClock.elapsedRealtime()
-        wallpaperManager.setStream(java.io.ByteArrayInputStream(bytes), null, true, which)
-        Log.d(
-            TAG,
-            "Wallpaper set (which=$which, ${bitmap.width}x${bitmap.height}): " +
-                "webp ${encoded - start}ms (${bytes.size / 1024}KB), " +
-                "setStream ${android.os.SystemClock.elapsedRealtime() - encoded}ms"
-        )
-    } catch (e: Exception) {
-        Log.w(TAG, "setStream path failed, falling back to setBitmap", e)
-        wallpaperManager.setBitmap(bitmap, null, true, which)
-    }
 }
 
 fun adaptiveBrightnessAdjustment(context: Context, source: Bitmap): Bitmap {

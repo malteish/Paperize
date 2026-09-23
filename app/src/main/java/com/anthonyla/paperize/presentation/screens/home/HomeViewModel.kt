@@ -332,9 +332,6 @@ class HomeViewModel @Inject constructor(
             } else if (updated.enableChanger) {
                 // Album selected and changer is enabled - schedule alarms
                 scheduleAlarms(updated)
-            } else {
-                // Album selected but changer is not enabled - enable it
-                toggleWallpaperChanger(true)
             }
         }
     }
@@ -398,6 +395,12 @@ class HomeViewModel @Inject constructor(
     }
 
     fun updateScheduleSettings(settings: ScheduleSettings) {
+        pendingSettingsJob?.cancel()
+        pendingSettingsJob = null
+        applyScheduleSettings(settings)
+    }
+
+    private fun applyScheduleSettings(settings: ScheduleSettings) {
         viewModelScope.launch {
             // Check if settings have changed before validation
             val currentSettings = settingsRepository.getScheduleSettings()
@@ -488,7 +491,8 @@ class HomeViewModel @Inject constructor(
         pendingSettingsJob?.cancel()
         pendingSettingsJob = viewModelScope.launch {
             delay(Constants.SETTINGS_DEBOUNCE_MS)
-            updateScheduleSettings(settings)
+            pendingSettingsJob = null
+            applyScheduleSettings(settings)
         }
     }
 
@@ -547,8 +551,10 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Trigger an immediate wallpaper change for whichever screen(s) are currently active,
-     * mirroring the BOTH/HOME/LOCK split used when scheduling. Backs the manual "change now" button.
+     * Change whichever wallpaper destinations are currently configured.
+     *
+     * Synchronized home/lock settings use one BOTH request; independent schedules are
+     * changed separately. LIVE is routed through the service to reload the renderer.
      */
     fun changeWallpaperNowForActiveScreens() {
         val settings = scheduleSettings.value
@@ -556,16 +562,18 @@ class HomeViewModel @Inject constructor(
             changeWallpaperNow(ScreenType.LIVE)
             return
         }
+
         val homeActive = settings.homeEnabled && settings.homeAlbumId != null
         val lockActive = settings.lockEnabled && settings.lockAlbumId != null
-        val isSynced = homeActive && lockActive &&
-            settings.homeAlbumId == settings.lockAlbumId && !settings.separateSchedules
-        when {
-            isSynced -> changeWallpaperNow(ScreenType.BOTH)
-            else -> {
-                if (homeActive) changeWallpaperNow(ScreenType.HOME)
-                if (lockActive) changeWallpaperNow(ScreenType.LOCK)
-            }
+        val synchronized = homeActive && lockActive &&
+            settings.homeAlbumId == settings.lockAlbumId &&
+            !settings.separateSchedules
+
+        if (synchronized) {
+            changeWallpaperNow(ScreenType.BOTH)
+        } else {
+            if (homeActive) changeWallpaperNow(ScreenType.HOME)
+            if (lockActive) changeWallpaperNow(ScreenType.LOCK)
         }
     }
 
@@ -582,12 +590,19 @@ class HomeViewModel @Inject constructor(
         if (wallpaperMode.value == com.anthonyla.paperize.core.WallpaperMode.LIVE) {
             // LIVE mode: schedule live wallpaper changes
             if (settings.liveAlbumId != null && settings.liveIntervalMinutes > 0) {
-                wallpaperScheduler.scheduleWallpaperChange(
-                    ScreenType.LIVE,
-                    settings.liveIntervalMinutes
-                )
+                if (settings.liveIntervalMinutes >= Constants.MIN_INTERVAL_MINUTES) {
+                    wallpaperScheduler.scheduleWallpaperChange(
+                        ScreenType.LIVE,
+                        settings.liveIntervalMinutes
+                    )
+                } else {
+                    // The visible live-wallpaper engine owns sub-15-minute intervals.
+                    wallpaperScheduler.cancelWallpaperChange(ScreenType.LIVE)
+                }
+                wallpaperScheduler.scheduleAlbumRefresh()
             } else {
                 wallpaperScheduler.cancelWallpaperChange(ScreenType.LIVE)
+                wallpaperScheduler.cancelAlbumRefresh()
             }
             return
         }

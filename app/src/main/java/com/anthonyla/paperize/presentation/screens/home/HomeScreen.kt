@@ -116,7 +116,7 @@ fun HomeScreen(
                             } else {
                                 WallpaperScreen(
                                     albums = albums,
-                                    scheduleSettings = scheduleSettings,
+                                    persistedScheduleSettings = scheduleSettings,
                                     appSettings = appSettings,
                                     wallpaperMode = wallpaperMode!!,
                                     onToggleChanger = { viewModel.toggleWallpaperChanger(it, onlyIfNotScheduled = true) },
@@ -125,7 +125,9 @@ fun HomeScreen(
                                     onSelectLiveAlbum = { album -> viewModel.selectLiveAlbum(album) },
                                     onUpdateScheduleSettings = { viewModel.updateScheduleSettings(it) },
                                     onUpdateScheduleSettingsDebounced = { viewModel.updateScheduleSettingsDebounced(it) },
-                                    onChangeWallpaperNow = { viewModel.changeWallpaperNowForActiveScreens() },
+                                    onChangeWallpaperNow = {
+                                        viewModel.changeWallpaperNowForActiveScreens()
+                                    },
                                     homeWallpaperUri = currentHomeWallpaperUri,
                                     lockWallpaperUri = currentLockWallpaperUri,
                                     onOpenCurrentWallpaperInGallery = { viewModel.openCurrentWallpaperInGallery() }

@@ -4,7 +4,7 @@
 # Automates the testing, building and release process for the Paperize Android application.
 #
 # Workflow Architecture:
-#   1. Test:    Runs unit tests to ensure code quality.
+#   1. Test:    Runs unit tests and Android lint to ensure code quality.
 #   2. Build:   Compiles and signs the release APK (depends on test passing).
 #   3. Release: Publishes the APK to a draft GitHub Release, but only for version tags.
 #
@@ -27,21 +27,24 @@ on:
   pull_request:
     branches: [ "master" ]
 
+permissions:
+  contents: read
+
 jobs:
   # ===================================================================
   # JOB: test
   #
-  # Runs unit tests to ensure code quality before building.
+  # Runs unit tests and Android lint to ensure code quality before building.
   # ===================================================================
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository source code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -52,6 +55,9 @@ jobs:
 
       - name: Run unit tests
         run: ./gradlew clean test
+
+      - name: Run Android lint
+        run: ./gradlew :app:lintDebug
 
   # ===================================================================
   # JOB: build
@@ -67,10 +73,10 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - name: Checkout repository source code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -110,20 +116,19 @@ jobs:
           fi
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
 
-      - name: Rename release APK
-        # Gradle outputs `app-release.apk`; rename it to the versioned `paperize-v*.apk`
-        # name that the artifact upload and the release job expect.
+      - name: Name APK for distribution
+        shell: bash
         run: |
           mv app/build/outputs/apk/release/app-release.apk \
-             app/build/outputs/apk/release/paperize-${{ steps.get_version.outputs.VERSION_NAME }}.apk
+            "app/build/outputs/apk/release/paperize-${{ steps.get_version.outputs.VERSION_NAME }}.apk"
 
       - name: Upload APK as a build artifact
         # Archives the generated APK with a dynamic, versioned name. This artifact is essential
         # for passing the APK file to the subsequent `release` job.
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: paperize-${{ steps.get_version.outputs.VERSION_NAME }}
-          path: app/build/outputs/apk/release/paperize-v*.apk
+          path: app/build/outputs/apk/release/paperize-${{ steps.get_version.outputs.VERSION_NAME }}.apk
           if-no-files-found: error
 
   # ===================================================================
@@ -143,7 +148,7 @@ jobs:
       - name: Download signed APK artifact
         # Downloads the versioned artifact produced by the `build` job. The pattern ensures
         # it finds the correct artifact regardless of the specific version number.
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: paperize-v*
           path: ./apk-artifact
@@ -152,7 +157,7 @@ jobs:
       - name: Create Release
         # Publishes a new release to GitHub. `draft: false` publishes immediately so
         # Obtainium (which cannot see draft releases) detects it without a manual step.
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           files: ./apk-artifact/paperize-v*.apk
           draft: false
