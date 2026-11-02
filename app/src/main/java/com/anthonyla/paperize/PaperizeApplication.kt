@@ -4,9 +4,6 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import com.anthonyla.paperize.core.constants.Constants
 import com.anthonyla.paperize.domain.repository.SettingsRepository
@@ -29,7 +26,7 @@ import javax.inject.Inject
  * Implements Configuration.Provider for WorkManager with Hilt support
  */
 @HiltAndroidApp
-class PaperizeApplication : Application(), Configuration.Provider, DefaultLifecycleObserver {
+class PaperizeApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -49,9 +46,9 @@ class PaperizeApplication : Application(), Configuration.Provider, DefaultLifecy
         // Create notification channel (minSdk is 31, so always supported)
         createNotificationChannel()
 
-        // Process lifecycle distinguishes real background/foreground transitions from activity
-        // recreation, so folder-backed albums are refreshed whenever the user returns to the app.
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        // Older versions rescanned every album on each app start. On large libraries that job
+        // never finished and kept restarting; drop any copy still queued from before the update.
+        AlbumRefreshScheduler.cancelLegacyForegroundRefresh(this)
 
         // Keep pause/resume widgets showing the real changer state
         observeChangerStateForWidgets()
@@ -89,9 +86,5 @@ class PaperizeApplication : Application(), Configuration.Provider, DefaultLifecy
 
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
-    }
-
-    override fun onStart(owner: LifecycleOwner) {
-        AlbumRefreshScheduler.enqueue(this)
     }
 }

@@ -9,7 +9,8 @@ import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.WallpaperSourceType
 import com.anthonyla.paperize.core.util.generateId
 import com.anthonyla.paperize.core.util.isValid
-import com.anthonyla.paperize.core.util.scanFolderImages
+import com.anthonyla.paperize.core.util.FolderSyncPlanner
+import com.anthonyla.paperize.core.util.scanFolderTree
 import com.anthonyla.paperize.data.database.dao.WallpaperCurrentDao
 import com.anthonyla.paperize.data.database.dao.WallpaperDao
 import com.anthonyla.paperize.data.database.dao.WallpaperQueueDao
@@ -17,9 +18,11 @@ import com.anthonyla.paperize.data.database.entities.WallpaperCurrentEntity
 import com.anthonyla.paperize.data.mapper.toDomainModel
 import com.anthonyla.paperize.data.mapper.toDomainModels
 import com.anthonyla.paperize.data.mapper.toEntity
+import com.anthonyla.paperize.domain.model.FolderSyncResult
 import com.anthonyla.paperize.domain.model.Wallpaper
 import com.anthonyla.paperize.domain.repository.WallpaperRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -116,33 +119,15 @@ class WallpaperRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun validateAndRemoveInvalidWallpapers(albumId: String): Result<Int> {
+    override suspend fun validateDirectWallpapers(albumId: String): Result<Int> {
         return try {
-            var totalRemoved = 0
-            val batchSize = 100 // Process in smaller batches to avoid memory spikes
-            var offset = 0
-
-            while (true) {
-                val wallpapers = wallpaperDao.getWallpapersByAlbumPaged(albumId, batchSize, offset)
-                if (wallpapers.isEmpty()) break
-
-                val invalidUris = wallpapers
-                    .filter { !it.uri.toUri().isValid(contentResolver) }
-                    .map { it.uri }
-                    .toSet()
-
-                if (invalidUris.isNotEmpty()) {
-                    wallpaperDao.deleteWallpapersByUris(invalidUris.toList())
-                    totalRemoved += invalidUris.size
-                    // Advance offset only by the number of valid items in this batch,
-                    // so valid items already checked are not re-fetched next iteration
-                    offset += wallpapers.size - invalidUris.size
-                } else {
-                    offset += batchSize
-                }
-            }
-
-            Result.Success(totalRemoved)
+            val invalidIds = wallpaperDao.getDirectWallpapersByAlbumSync(albumId)
+                .filter { !it.uri.toUri().isValid(contentResolver) }
+                .map { it.id }
+            invalidIds.chunked(SQL_BATCH_SIZE).forEach { wallpaperDao.deleteWallpapersByIds(it) }
+            Result.Success(invalidIds.size)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -277,20 +262,39 @@ class WallpaperRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun scanFolderForWallpapers(folderUri: Uri): Result<List<Wallpaper>> {
+    override suspend fun syncFolderWallpapers(
+        albumId: String,
+        folderId: String,
+        folderUri: Uri
+    ): Result<FolderSyncResult> {
         return try {
-            val wallpapers = folderUri.scanFolderImages(context).map { image ->
+            val scan = folderUri.scanFolderTree(context)
+            val scannedByUri = scan.images.associateBy { it.uri.toString() }
+            val stored = wallpaperDao.getWallpaperUrisByAlbumAndFolder(albumId, folderId).toHashSet()
+            val plan = FolderSyncPlanner.plan(stored, scannedByUri.keys, scan.isComplete)
+
+            val now = System.currentTimeMillis()
+            val newEntities = plan.toAdd.map { uri ->
+                val image = scannedByUri.getValue(uri)
                 Wallpaper(
                     id = generateId(),
-                    albumId = "",
-                    folderId = null,
-                    uri = image.uri.toString(),
+                    albumId = albumId,
+                    folderId = folderId,
+                    uri = uri,
                     fileName = image.name,
                     dateModified = image.lastModified,
-                    sourceType = WallpaperSourceType.FOLDER
-                )
+                    sourceType = WallpaperSourceType.FOLDER,
+                    addedAt = now
+                ).toEntity()
             }
-            Result.Success(wallpapers)
+            newEntities.chunked(SQL_BATCH_SIZE).forEach { wallpaperDao.insertWallpapers(it) }
+            plan.toRemove.chunked(SQL_BATCH_SIZE).forEach {
+                wallpaperDao.deleteFolderWallpapersByUris(albumId, folderId, it)
+            }
+
+            Result.Success(FolderSyncResult(plan.toAdd.size, plan.toRemove.size, scan.isComplete))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -298,7 +302,7 @@ class WallpaperRepositoryImpl @Inject constructor(
 
     override suspend fun isWallpaperInAlbum(albumId: String, uri: String): Boolean =
         wallpaperDao.getWallpaperByUri(uri)?.let { it.albumId == albumId } ?: false
-
-    override suspend fun getExistingWallpaperUris(albumId: String, folderId: String): Set<String> =
-        wallpaperDao.getWallpaperUrisByAlbumAndFolder(albumId, folderId).toHashSet()
 }
+
+/** Rows per IN (...) / insert batch, well below SQLite's bound-variable limit. */
+private const val SQL_BATCH_SIZE = 500

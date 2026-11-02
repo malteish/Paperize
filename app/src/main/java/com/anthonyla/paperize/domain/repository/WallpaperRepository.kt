@@ -3,6 +3,7 @@ package com.anthonyla.paperize.domain.repository
 import android.net.Uri
 import com.anthonyla.paperize.core.Result
 import com.anthonyla.paperize.core.ScreenType
+import com.anthonyla.paperize.domain.model.FolderSyncResult
 import com.anthonyla.paperize.domain.model.Wallpaper
 import kotlinx.coroutines.flow.Flow
 
@@ -61,9 +62,10 @@ interface WallpaperRepository {
     suspend fun updateWallpaperOrder(wallpaperId: String, order: Int): Result<Unit>
 
     /**
-     * Validate wallpaper URIs and remove invalid ones
+     * Check the URIs of wallpapers added directly (not through a folder) and remove broken ones.
+     * Folder wallpapers are kept in sync by [syncFolderWallpapers] instead.
      */
-    suspend fun validateAndRemoveInvalidWallpapers(albumId: String): Result<Int>
+    suspend fun validateDirectWallpapers(albumId: String): Result<Int>
 
     /**
      * Get next wallpaper in queue
@@ -134,19 +136,15 @@ interface WallpaperRepository {
     suspend fun setCurrentWallpaper(albumId: String, screenType: ScreenType, wallpaperId: String)
 
     /**
-     * Scan folder for wallpapers
+     * Rescan a folder and bring its stored wallpapers in line with it: add new image files and
+     * remove ones that disappeared. Uses one query per directory, not one per file. Nothing is
+     * removed if any directory could not be listed.
      */
-    suspend fun scanFolderForWallpapers(folderUri: Uri): Result<List<Wallpaper>>
+    suspend fun syncFolderWallpapers(albumId: String, folderId: String, folderUri: Uri): Result<FolderSyncResult>
 
     /**
      * Check if a wallpaper with the given URI already exists in the album
      * Optimized for checking duplicates during folder sync
      */
     suspend fun isWallpaperInAlbum(albumId: String, uri: String): Boolean
-
-    /**
-     * Get all existing wallpaper URIs for a specific folder within an album.
-     * Used for bulk duplicate detection during folder rescan (avoids N+1 queries).
-     */
-    suspend fun getExistingWallpaperUris(albumId: String, folderId: String): Set<String>
 }

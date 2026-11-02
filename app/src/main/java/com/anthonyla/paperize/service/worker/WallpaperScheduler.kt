@@ -246,14 +246,15 @@ class WallpaperScheduler @Inject constructor(
     /**
      * Schedule daily album refresh worker
      *
-     * Runs once per day (typically at 3 AM) to validate and refresh all albums:
-     * - Validates all wallpaper and folder URIs in all albums
-     * - Removes invalid entries (deleted files, permission changes, etc.)
-     * - Rescans all folders for new wallpapers and adds them to albums
+     * Runs once per day (from 3 AM, while charging) to bring all albums in line with their
+     * folders: adds new image files, removes deleted ones and folders that became unreadable.
+     * Requiring charging keeps the scan from using up the app's background job time, which the
+     * wallpaper change worker needs.
      */
     fun scheduleAlbumRefresh() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+            .setRequiresCharging(true)
             .build()
 
         // Calculate initial delay to target 3 AM

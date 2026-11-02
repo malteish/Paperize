@@ -255,4 +255,6 @@
   <string name="widget_controls_grid_description">以 2x2 网格显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
   <string name="widget_controls_circle_label">Paperize 控制（圆形）</string>
   <string name="widget_controls_circle_description">以圆形的四个扇区显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
+    <string name="rescan_folders">重新扫描文件夹</string>
+    <string name="rescan_folders_started">正在后台重新扫描文件夹</string>
 </resources>

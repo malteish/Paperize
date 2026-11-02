@@ -295,6 +295,8 @@ class AlbumRepositoryImpl @Inject constructor(
             }
 
             Result.Success(invalidFolderIds.size)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error(e)
         }
