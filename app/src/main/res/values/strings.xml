@@ -231,11 +231,11 @@
   <string name="pause_wallpaper_changes">Pause wallpaper changes</string>
   <string name="resume_wallpaper_changes">Resume wallpaper changes</string>
 
-  <!-- Combined widgets: all three buttons in one widget -->
+  <!-- Combined widgets: all four buttons in one widget -->
   <string name="widget_controls_row_label">Paperize controls (row)</string>
-  <string name="widget_controls_row_description">Change, pause/resume and copy-to-premium buttons side by side</string>
+  <string name="widget_controls_row_description">Change, pause/resume, copy-to-premium and open-image buttons side by side</string>
   <string name="widget_controls_column_label">Paperize controls (column)</string>
-  <string name="widget_controls_column_description">Change, pause/resume and copy-to-premium buttons stacked</string>
+  <string name="widget_controls_column_description">Change, pause/resume, copy-to-premium and open-image buttons stacked</string>
 
   <!-- Copy-to-premium widget -->
   <string name="widget_copy_to_premium_label">Copy to premium folder</string>
@@ -264,6 +264,4 @@
   <string name="widget_controls_grid_description">Change, pause/resume, copy-to-premium and open-image buttons in a 2x2 grid</string>
   <string name="widget_controls_circle_label">Paperize controls (circle)</string>
   <string name="widget_controls_circle_description">Change, pause/resume, copy-to-premium and open-image buttons as the quarters of a circle</string>
-  <string name="widget_controls_circle_small_label">Paperize controls (small circle)</string>
-  <string name="widget_controls_circle_small_description">All four buttons as the quarters of an icon-sized circle</string>
 </resources>

@@ -19,8 +19,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Home-screen widget holding several widget buttons: change wallpaper, pause/resume, copy to
- * premium folder and, in the 2x2 variants, open image.
+ * Home-screen widget holding all four widget buttons: change wallpaper, pause/resume, copy to
+ * premium folder and open image.
  *
  * This provider only draws the buttons. Each button fires the same PendingIntent as its
  * single-button widget, so taps are handled by [ChangeWallpaperWidgetProvider],
@@ -31,8 +31,7 @@ import javax.inject.Inject
  *
  * One subclass per layout, because a widget provider has exactly one size and layout:
  * [ControlsRowWidgetProvider] (2x1), [ControlsColumnWidgetProvider] (1x2),
- * [ControlsGridWidgetProvider] (2x2), [ControlsCircleWidgetProvider] (2x2) and
- * [ControlsCircleSmallWidgetProvider] (1x1).
+ * [ControlsGridWidgetProvider] (2x2) and [ControlsCircleWidgetProvider] (2x2).
  */
 abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
@@ -41,9 +40,6 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
     @get:LayoutRes
     protected abstract val layoutRes: Int
-
-    /** Whether [layoutRes] contains the open-image button (R.id.widget_open). */
-    protected open val hasOpenButton: Boolean = false
 
     /** Pause/resume icons; the circle variant uses quarter-circle versions. */
     @get:DrawableRes
@@ -98,14 +94,10 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
                 R.id.widget_premium,
                 CopyToPremiumWidgetProvider.tapPendingIntent(context)
             )
-            // Only set when the layout has the view: RemoteViews fails the whole widget
-            // ("Can't load widget") when an action targets a missing id.
-            if (hasOpenButton) {
-                setOnClickPendingIntent(
-                    R.id.widget_open,
-                    OpenImageWidgetProvider.tapPendingIntent(context)
-                )
-            }
+            setOnClickPendingIntent(
+                R.id.widget_open,
+                OpenImageWidgetProvider.tapPendingIntent(context)
+            )
         }
 
     companion object {
@@ -115,8 +107,7 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
             ControlsRowWidgetProvider::class.java,
             ControlsColumnWidgetProvider::class.java,
             ControlsGridWidgetProvider::class.java,
-            ControlsCircleWidgetProvider::class.java,
-            ControlsCircleSmallWidgetProvider::class.java
+            ControlsCircleWidgetProvider::class.java
         )
 
         /**
@@ -138,13 +129,13 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
     }
 }
 
-/** The three widget buttons side by side, 2x1. */
+/** The four widget buttons side by side, 2x1. */
 @AndroidEntryPoint
 class ControlsRowWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_row
 }
 
-/** The three widget buttons stacked, 1x2. */
+/** The four widget buttons stacked, 1x2. */
 @AndroidEntryPoint
 class ControlsColumnWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_column
@@ -154,23 +145,13 @@ class ControlsColumnWidgetProvider : ControlsWidgetProvider() {
 @AndroidEntryPoint
 class ControlsGridWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_grid
-    override val hasOpenButton = true
 }
 
 /** All four widget buttons as the quarters of one circle, 2x2. */
 @AndroidEntryPoint
 class ControlsCircleWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_circle
-    override val hasOpenButton = true
     override val pauseIcon = R.drawable.ic_widget_quadrant_pause
     override val resumeIcon = R.drawable.ic_widget_quadrant_resume
 }
 
-/** The circle of four buttons shrunk to app-icon size, 1x1. */
-@AndroidEntryPoint
-class ControlsCircleSmallWidgetProvider : ControlsWidgetProvider() {
-    override val layoutRes = R.layout.widget_controls_circle_small
-    override val hasOpenButton = true
-    override val pauseIcon = R.drawable.ic_widget_quadrant_pause
-    override val resumeIcon = R.drawable.ic_widget_quadrant_resume
-}

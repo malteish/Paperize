@@ -128,7 +128,7 @@
                 android:resource="@xml/copy_to_premium_widget_info" />
         </receiver>
 
-        <!-- Home-screen widget: all three widget buttons in one 2x1 widget -->
+        <!-- Home-screen widget: all four widget buttons in one 2x1 widget -->
         <receiver
             android:name=".service.widget.ControlsRowWidgetProvider"
             android:enabled="true"
@@ -142,7 +142,7 @@
                 android:resource="@xml/controls_row_widget_info" />
         </receiver>
 
-        <!-- Home-screen widget: all three widget buttons in one 1x2 widget -->
+        <!-- Home-screen widget: all four widget buttons in one 1x2 widget -->
         <receiver
             android:name=".service.widget.ControlsColumnWidgetProvider"
             android:enabled="true"
@@ -196,20 +196,6 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/controls_circle_widget_info" />
-        </receiver>
-
-        <!-- Home-screen widget: all four widget buttons as quarters of a 1x1 circle -->
-        <receiver
-            android:name=".service.widget.ControlsCircleSmallWidgetProvider"
-            android:enabled="true"
-            android:exported="true"
-            android:label="@string/widget_controls_circle_small_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/controls_circle_small_widget_info" />
         </receiver>
 
         <!-- Invisible trampoline behind the open-image widget buttons -->

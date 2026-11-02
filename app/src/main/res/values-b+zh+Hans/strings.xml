@@ -229,9 +229,9 @@
   <string name="pause_wallpaper_changes">暂停更换壁纸</string>
   <string name="resume_wallpaper_changes">恢复更换壁纸</string>
   <string name="widget_controls_row_label">Paperize 控制（横排）</string>
-  <string name="widget_controls_row_description">并排显示更换、暂停/恢复和复制到精选文件夹按钮</string>
+  <string name="widget_controls_row_description">并排显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
   <string name="widget_controls_column_label">Paperize 控制（竖排）</string>
-  <string name="widget_controls_column_description">上下排列更换、暂停/恢复和复制到精选文件夹按钮</string>
+  <string name="widget_controls_column_description">上下排列更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
   <string name="widget_copy_to_premium_label">复制到精选文件夹</string>
   <string name="widget_copy_to_premium_description">点按以将当前壁纸复制到你的精选文件夹</string>
   <string name="copy_to_premium_folder">将当前壁纸复制到精选文件夹</string>
@@ -255,6 +255,4 @@
   <string name="widget_controls_grid_description">以 2x2 网格显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
   <string name="widget_controls_circle_label">Paperize 控制（圆形）</string>
   <string name="widget_controls_circle_description">以圆形的四个扇区显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
-  <string name="widget_controls_circle_small_label">Paperize 控制（小圆形）</string>
-  <string name="widget_controls_circle_small_description">以图标大小圆形的四个扇区显示全部四个按钮</string>
 </resources>
