@@ -31,7 +31,8 @@ import javax.inject.Inject
  *
  * One subclass per layout, because a widget provider has exactly one size and layout:
  * [ControlsRowWidgetProvider] (2x1), [ControlsColumnWidgetProvider] (1x2),
- * [ControlsGridWidgetProvider] (2x2) and [ControlsCircleWidgetProvider] (2x2).
+ * [ControlsGridWidgetProvider] (2x2), [ControlsCircleWidgetProvider] (2x2) and
+ * [ControlsCircleSmallWidgetProvider] (1x1).
  */
 abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
@@ -114,7 +115,8 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
             ControlsRowWidgetProvider::class.java,
             ControlsColumnWidgetProvider::class.java,
             ControlsGridWidgetProvider::class.java,
-            ControlsCircleWidgetProvider::class.java
+            ControlsCircleWidgetProvider::class.java,
+            ControlsCircleSmallWidgetProvider::class.java
         )
 
         /**
@@ -159,6 +161,15 @@ class ControlsGridWidgetProvider : ControlsWidgetProvider() {
 @AndroidEntryPoint
 class ControlsCircleWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_circle
+    override val hasOpenButton = true
+    override val pauseIcon = R.drawable.ic_widget_quadrant_pause
+    override val resumeIcon = R.drawable.ic_widget_quadrant_resume
+}
+
+/** The circle of four buttons shrunk to app-icon size, 1x1. */
+@AndroidEntryPoint
+class ControlsCircleSmallWidgetProvider : ControlsWidgetProvider() {
+    override val layoutRes = R.layout.widget_controls_circle_small
     override val hasOpenButton = true
     override val pauseIcon = R.drawable.ic_widget_quadrant_pause
     override val resumeIcon = R.drawable.ic_widget_quadrant_resume
