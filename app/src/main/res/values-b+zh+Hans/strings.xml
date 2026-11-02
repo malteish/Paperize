@@ -249,4 +249,10 @@
   <string name="change_folder">更改</string>
   <string name="clear_folder">清除</string>
 
+  <string name="widget_open_image_label">打开壁纸图片</string>
+  <string name="widget_open_image_description">点按以在图库应用中打开当前壁纸</string>
+  <string name="widget_controls_grid_label">Paperize 控制（网格）</string>
+  <string name="widget_controls_grid_description">以 2x2 网格显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
+  <string name="widget_controls_circle_label">Paperize 控制（圆形）</string>
+  <string name="widget_controls_circle_description">以圆形的四个扇区显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
 </resources>

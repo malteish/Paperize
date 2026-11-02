@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One quarter of the circular controls widget (TR quadrant). The pause glyph
+     of the matching single-button icon, scaled to 0.45 and centred on the quadrant's
+     centroid. Generated alongside its three siblings; keep them in sync. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <path
+        android:fillColor="#FFD9E2"
+        android:pathData="M0,54 L0,0 A54,54 0 0 1 54,54 Z" />
+    <group
+        android:scaleX="0.45"
+        android:scaleY="0.45"
+        android:translateX="-2.3"
+        android:translateY="7.7">
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M39,34 h2 a5,5 0 0 1 5,5 v30 a5,5 0 0 1 -5,5 h-2 a5,5 0 0 1 -5,-5 v-30 a5,5 0 0 1 5,-5 z" />
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M67,34 h2 a5,5 0 0 1 5,5 v30 a5,5 0 0 1 -5,5 h-2 a5,5 0 0 1 -5,-5 v-30 a5,5 0 0 1 5,-5 z" />
+    </group>
+</vector>

@@ -7,13 +7,9 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.net.toUri
-import com.anthonyla.paperize.core.ScreenType
-import com.anthonyla.paperize.core.WallpaperMode
 import com.anthonyla.paperize.core.util.PremiumFolderNaming
-import com.anthonyla.paperize.domain.model.ScheduleSettings
 import com.anthonyla.paperize.domain.model.Wallpaper
 import com.anthonyla.paperize.domain.repository.SettingsRepository
-import com.anthonyla.paperize.domain.repository.WallpaperRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -51,14 +47,14 @@ sealed interface CopyToPremiumFolderResult {
  */
 class CopyToPremiumFolderUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val wallpaperRepository: WallpaperRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val getCurrentWallpaper: GetCurrentWallpaperUseCase
 ) {
     suspend operator fun invoke(): CopyToPremiumFolderResult {
         val folderUriString = settingsRepository.getAppSettings().premiumFolderUri
         if (folderUriString.isNullOrEmpty()) return CopyToPremiumFolderResult.NoFolderConfigured
 
-        val wallpaper = resolveCurrentWallpaper()
+        val wallpaper = getCurrentWallpaper()
             ?: return CopyToPremiumFolderResult.NoCurrentWallpaper
 
         return try {
@@ -71,33 +67,6 @@ class CopyToPremiumFolderUseCase @Inject constructor(
             Log.e(TAG, "Failed to copy wallpaper to the premium folder", e)
             CopyToPremiumFolderResult.Failed(e)
         }
-    }
-
-    /**
-     * Find the most relevant "current wallpaper" record, mirroring the resolution the home
-     * screen preview uses: wallpapers applied to both screens at once are recorded under
-     * [ScreenType.BOTH], so each screen checks its own type first and then falls back to BOTH.
-     */
-    private suspend fun resolveCurrentWallpaper(): Wallpaper? {
-        val settings = settingsRepository.getScheduleSettings()
-        if (settingsRepository.getWallpaperMode() == WallpaperMode.LIVE) {
-            return settings.liveAlbumId?.let {
-                wallpaperRepository.getCurrentWallpaper(it, ScreenType.LIVE)
-            }
-        }
-        return resolveStaticWallpaper(settings)
-    }
-
-    private suspend fun resolveStaticWallpaper(settings: ScheduleSettings): Wallpaper? {
-        settings.homeAlbumId?.let { albumId ->
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.HOME)?.let { return it }
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.BOTH)?.let { return it }
-        }
-        settings.lockAlbumId?.let { albumId ->
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.LOCK)?.let { return it }
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.BOTH)?.let { return it }
-        }
-        return null
     }
 
     private fun copyToFolder(wallpaper: Wallpaper, treeUri: Uri): CopyToPremiumFolderResult {
