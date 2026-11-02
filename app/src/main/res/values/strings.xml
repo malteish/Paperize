@@ -264,4 +264,6 @@
   <string name="widget_controls_grid_description">Change, pause/resume, copy-to-premium and open-image buttons in a 2x2 grid</string>
   <string name="widget_controls_circle_label">Paperize controls (circle)</string>
   <string name="widget_controls_circle_description">Change, pause/resume, copy-to-premium and open-image buttons as the quarters of a circle</string>
+  <string name="widget_controls_circle_small_label">Paperize controls (small circle)</string>
+  <string name="widget_controls_circle_small_description">All four buttons as the quarters of an icon-sized circle</string>
 </resources>

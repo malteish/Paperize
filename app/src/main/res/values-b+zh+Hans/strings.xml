@@ -255,4 +255,6 @@
   <string name="widget_controls_grid_description">以 2x2 网格显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
   <string name="widget_controls_circle_label">Paperize 控制（圆形）</string>
   <string name="widget_controls_circle_description">以圆形的四个扇区显示更换、暂停/恢复、复制到精选文件夹和打开图片按钮</string>
+  <string name="widget_controls_circle_small_label">Paperize 控制（小圆形）</string>
+  <string name="widget_controls_circle_small_description">以图标大小圆形的四个扇区显示全部四个按钮</string>
 </resources>
