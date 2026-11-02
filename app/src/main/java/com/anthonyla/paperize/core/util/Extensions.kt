@@ -62,11 +62,27 @@ data class ScannedImage(
  * [onProgress] is invoked with the running number of images found, throttled to roughly once
  * per [PROGRESS_REPORT_INTERVAL] discoveries so callers can show a live count without flooding.
  */
-fun Uri.scanFolderImages(context: Context, onProgress: ((found: Int) -> Unit)? = null): List<ScannedImage> {
+fun Uri.scanFolderImages(context: Context, onProgress: ((found: Int) -> Unit)? = null): List<ScannedImage> =
+    scanFolderTree(context, onProgress).images
+
+/**
+ * Result of a folder tree scan.
+ *
+ * [isComplete] is false when at least one directory (including the root) could not be listed.
+ * Callers that delete database entries missing from [images] must only do so when the scan is
+ * complete, or a single unreadable directory would wipe every wallpaper below it.
+ */
+data class FolderScan(
+    val images: List<ScannedImage>,
+    val isComplete: Boolean
+)
+
+/** Same traversal as [scanFolderImages], but also reports whether every directory was listed. */
+fun Uri.scanFolderTree(context: Context, onProgress: ((found: Int) -> Unit)? = null): FolderScan {
     val rootDocumentId = try {
         DocumentsContract.getTreeDocumentId(this)
     } catch (_: IllegalArgumentException) {
-        return emptyList() // Not a tree URI
+        return FolderScan(emptyList(), isComplete = false) // Not a tree URI
     }
 
     val projection = arrayOf(
@@ -80,12 +96,22 @@ fun Uri.scanFolderImages(context: Context, onProgress: ((found: Int) -> Unit)? =
     var lastReported = 0
     val pendingDirs = ArrayDeque<String>()
     pendingDirs.addLast(rootDocumentId)
+    var failedDirectories = 0
 
     while (pendingDirs.isNotEmpty()) {
         val parentDocumentId = pendingDirs.removeLast()
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(this, parentDocumentId)
         try {
-            context.contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+            val cursor = context.contentResolver.query(childrenUri, projection, null, null, null)
+            if (cursor == null) {
+                failedDirectories++
+                continue
+            }
+            // Cloud providers can return a partial listing while they fetch the rest
+            if (cursor.extras?.getBoolean(DocumentsContract.EXTRA_LOADING, false) == true) {
+                failedDirectories++
+            }
+            cursor.use {
                 val idColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
                 val nameColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
                 val mimeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
@@ -116,10 +142,11 @@ fun Uri.scanFolderImages(context: Context, onProgress: ((found: Int) -> Unit)? =
             }
         } catch (_: Exception) {
             // Skip directories that can't be read and continue with the rest of the tree.
+            failedDirectories++
         }
     }
     onProgress?.invoke(results.size)
-    return results
+    return FolderScan(results, isComplete = failedDirectories == 0)
 }
 
 /** Report scan progress at most once per this many discovered images. */

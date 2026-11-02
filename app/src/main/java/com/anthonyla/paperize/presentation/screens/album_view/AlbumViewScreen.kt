@@ -1,6 +1,7 @@
 package com.anthonyla.paperize.presentation.screens.album_view
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -147,7 +148,12 @@ fun AlbumViewScreen(
                 isSelectionMode = isSelectionMode,
                 selectedCount = selectedCount,
                 allSelected = allSelected,
+                showRescan = folders.isNotEmpty(),
                 onBackClick = onBackClick,
+                onRescanClick = {
+                    viewModel.rescanFolders()
+                    Toast.makeText(context, R.string.rescan_folders_started, Toast.LENGTH_SHORT).show()
+                },
                 onSortClick = { showSortSheet = true },
                 onDeleteAlbum = { showDeleteAlbumDialog = true },
                 onSelectAll = { if (allSelected) viewModel.clearSelection() else viewModel.selectAll() },

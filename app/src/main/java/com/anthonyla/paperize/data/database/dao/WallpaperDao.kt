@@ -123,7 +123,13 @@ interface WallpaperDao {
     suspend fun getWallpaperCountByAlbum(albumId: String): Int
 
     /**
-     * Get all URIs for wallpapers in a folder — used for duplicate detection during folder rescan.
+     * Delete a folder's wallpapers by URI, limited to one album (the same file can be in several)
+     */
+    @Query("DELETE FROM wallpapers WHERE albumId = :albumId AND folderId = :folderId AND uri IN (:uris)")
+    suspend fun deleteFolderWallpapersByUris(albumId: String, folderId: String, uris: List<String>)
+
+    /**
+     * Get URIs of all wallpapers stored for a folder within an album
      */
     @Query("SELECT uri FROM wallpapers WHERE albumId = :albumId AND folderId = :folderId")
     suspend fun getWallpaperUrisByAlbumAndFolder(albumId: String, folderId: String): List<String>

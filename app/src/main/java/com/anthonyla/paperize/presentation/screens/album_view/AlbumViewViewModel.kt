@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.anthonyla.paperize.service.worker.AlbumRefreshScheduler
 import javax.inject.Inject
 
 @HiltViewModel
@@ -215,6 +216,11 @@ class AlbumViewViewModel @Inject constructor(
         _selectedWallpapers.value = emptySet()
         _selectedFolders.value = emptySet()
         _isSelectionMode.value = false
+    }
+
+    /** Rescan this album's folders in the background (adds new files, removes deleted ones). */
+    fun rescanFolders() {
+        AlbumRefreshScheduler.enqueueRescan(context, albumId)
     }
 
     fun deleteSelected() {

@@ -264,4 +264,6 @@
   <string name="widget_controls_grid_description">Change, pause/resume, copy-to-premium and open-image buttons in a 2x2 grid</string>
   <string name="widget_controls_circle_label">Paperize controls (circle)</string>
   <string name="widget_controls_circle_description">Change, pause/resume, copy-to-premium and open-image buttons as the quarters of a circle</string>
+    <string name="rescan_folders">Rescan folders</string>
+    <string name="rescan_folders_started">Rescanning folders in the background</string>
 </resources>
