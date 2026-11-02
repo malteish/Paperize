@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One quarter of the circular controls widget (TR quadrant). The resume glyph
+     of the matching single-button icon, scaled to 0.45 and centred on the quadrant's
+     centroid. Generated alongside its three siblings; keep them in sync. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <path
+        android:fillColor="#FFD9E2"
+        android:pathData="M0,54 L0,0 A54,54 0 0 1 54,54 Z" />
+    <group
+        android:scaleX="0.45"
+        android:scaleY="0.45"
+        android:translateX="-2.3"
+        android:translateY="7.7">
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M44,32 L78,54 L44,76 Z" />
+    </group>
+</vector>

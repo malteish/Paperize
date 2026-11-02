@@ -3,20 +3,18 @@ package com.anthonyla.paperize.presentation.screens.home
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anthonyla.paperize.R
 import com.anthonyla.paperize.core.ScreenType
 import com.anthonyla.paperize.core.constants.Constants
 import com.anthonyla.paperize.core.util.isPaperizeLiveWallpaperActive
+import com.anthonyla.paperize.core.util.openWallpaperInGallery
 import com.anthonyla.paperize.domain.model.AlbumSummary
 import com.anthonyla.paperize.domain.model.ScheduleSettings
-import com.anthonyla.paperize.domain.model.Wallpaper
 import com.anthonyla.paperize.domain.repository.SettingsRepository
 import com.anthonyla.paperize.domain.usecase.CreateAlbumUseCase
 import com.anthonyla.paperize.domain.usecase.GetAlbumSummariesUseCase
+import com.anthonyla.paperize.domain.usecase.GetCurrentWallpaperUseCase
 import com.anthonyla.paperize.service.wallpaper.WallpaperChangeService
 import com.anthonyla.paperize.service.worker.WallpaperScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,6 +41,7 @@ class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     getAlbumSummariesUseCase: GetAlbumSummariesUseCase,
     private val createAlbumUseCase: CreateAlbumUseCase,
+    private val getCurrentWallpaperUseCase: GetCurrentWallpaperUseCase,
     private val settingsRepository: SettingsRepository,
     private val wallpaperScheduler: WallpaperScheduler,
     private val wallpaperRepository: com.anthonyla.paperize.domain.repository.WallpaperRepository
@@ -498,48 +497,12 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Open the source image of the currently applied wallpaper in a gallery app.
-     *
-     * The wallpaper changer records which wallpaper was last applied per album/screen.
-     * Prefers the home screen wallpaper and falls back to the lock screen one.
      * Shows a toast if no wallpaper has been recorded yet or no app can open the image.
      */
     fun openCurrentWallpaperInGallery() {
         viewModelScope.launch {
-            val settings = settingsRepository.getScheduleSettings()
-            val current = resolveCurrentWallpaper(settings)
-            if (current == null) {
-                Toast.makeText(context, R.string.no_current_wallpaper_to_open, Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(current.uri.toUri(), "image/*")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(intent)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to open current wallpaper in gallery", e)
-                Toast.makeText(context, R.string.no_app_to_open_image, Toast.LENGTH_SHORT).show()
-            }
+            context.openWallpaperInGallery(getCurrentWallpaperUseCase())
         }
-    }
-
-    /**
-     * Find the most relevant "current wallpaper" record.
-     *
-     * Wallpapers applied to both screens at once are recorded under ScreenType.BOTH,
-     * so each screen checks its own type first and then falls back to BOTH.
-     */
-    private suspend fun resolveCurrentWallpaper(settings: ScheduleSettings): Wallpaper? {
-        settings.homeAlbumId?.let { albumId ->
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.HOME)?.let { return it }
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.BOTH)?.let { return it }
-        }
-        settings.lockAlbumId?.let { albumId ->
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.LOCK)?.let { return it }
-            wallpaperRepository.getCurrentWallpaper(albumId, ScreenType.BOTH)?.let { return it }
-        }
-        return null
     }
 
     fun changeWallpaperNow(screenType: ScreenType) {

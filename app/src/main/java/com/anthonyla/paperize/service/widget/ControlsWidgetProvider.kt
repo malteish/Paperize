@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
+import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import com.anthonyla.paperize.R
 import com.anthonyla.paperize.domain.repository.SettingsRepository
@@ -18,17 +19,19 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Home-screen widget holding all three widget buttons: change wallpaper, pause/resume and
- * copy to premium folder.
+ * Home-screen widget holding several widget buttons: change wallpaper, pause/resume, copy to
+ * premium folder and, in the 2x2 variants, open image.
  *
  * This provider only draws the buttons. Each button fires the same PendingIntent as its
  * single-button widget, so taps are handled by [ChangeWallpaperWidgetProvider],
- * [PauseResumeWidgetProvider] and [CopyToPremiumWidgetProvider], and behave identically.
+ * [PauseResumeWidgetProvider], [CopyToPremiumWidgetProvider] and [OpenImageWidgetProvider],
+ * and behave identically.
  * The pause/resume icon follows the changer state: [PauseResumeWidgetProvider.requestRefresh]
  * and its tap handler call [requestRefreshAll].
  *
- * Two subclasses exist because a widget provider has exactly one size and layout:
- * [ControlsRowWidgetProvider] (2x1) and [ControlsColumnWidgetProvider] (1x2).
+ * One subclass per layout, because a widget provider has exactly one size and layout:
+ * [ControlsRowWidgetProvider] (2x1), [ControlsColumnWidgetProvider] (1x2),
+ * [ControlsGridWidgetProvider] (2x2) and [ControlsCircleWidgetProvider] (2x2).
  */
 abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
@@ -37,6 +40,16 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
     @get:LayoutRes
     protected abstract val layoutRes: Int
+
+    /** Whether [layoutRes] contains the open-image button (R.id.widget_open). */
+    protected open val hasOpenButton: Boolean = false
+
+    /** Pause/resume icons; the circle variant uses quarter-circle versions. */
+    @get:DrawableRes
+    protected open val pauseIcon: Int = R.drawable.ic_widget_pause
+
+    @get:DrawableRes
+    protected open val resumeIcon: Int = R.drawable.ic_widget_resume
 
     override fun onUpdate(
         context: Context,
@@ -63,7 +76,7 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
         RemoteViews(context.packageName, layoutRes).apply {
             setImageViewResource(
                 R.id.widget_pause_resume,
-                if (changerEnabled) R.drawable.ic_widget_pause else R.drawable.ic_widget_resume
+                if (changerEnabled) pauseIcon else resumeIcon
             )
             setContentDescription(
                 R.id.widget_pause_resume,
@@ -84,6 +97,14 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
                 R.id.widget_premium,
                 CopyToPremiumWidgetProvider.tapPendingIntent(context)
             )
+            // Only set when the layout has the view: RemoteViews fails the whole widget
+            // ("Can't load widget") when an action targets a missing id.
+            if (hasOpenButton) {
+                setOnClickPendingIntent(
+                    R.id.widget_open,
+                    OpenImageWidgetProvider.tapPendingIntent(context)
+                )
+            }
         }
 
     companion object {
@@ -91,7 +112,9 @@ abstract class ControlsWidgetProvider : AppWidgetProvider() {
 
         private val providers = listOf(
             ControlsRowWidgetProvider::class.java,
-            ControlsColumnWidgetProvider::class.java
+            ControlsColumnWidgetProvider::class.java,
+            ControlsGridWidgetProvider::class.java,
+            ControlsCircleWidgetProvider::class.java
         )
 
         /**
@@ -123,4 +146,20 @@ class ControlsRowWidgetProvider : ControlsWidgetProvider() {
 @AndroidEntryPoint
 class ControlsColumnWidgetProvider : ControlsWidgetProvider() {
     override val layoutRes = R.layout.widget_controls_column
+}
+
+/** All four widget buttons in a 2x2 grid. */
+@AndroidEntryPoint
+class ControlsGridWidgetProvider : ControlsWidgetProvider() {
+    override val layoutRes = R.layout.widget_controls_grid
+    override val hasOpenButton = true
+}
+
+/** All four widget buttons as the quarters of one circle, 2x2. */
+@AndroidEntryPoint
+class ControlsCircleWidgetProvider : ControlsWidgetProvider() {
+    override val layoutRes = R.layout.widget_controls_circle
+    override val hasOpenButton = true
+    override val pauseIcon = R.drawable.ic_widget_quadrant_pause
+    override val resumeIcon = R.drawable.ic_widget_quadrant_resume
 }

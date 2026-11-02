@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One quarter of the circular controls widget (TL quadrant). The next glyph
+     of the matching single-button icon, scaled to 0.45 and centred on the quadrant's
+     centroid. Generated alongside its three siblings; keep them in sync. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <path
+        android:fillColor="#FFD9E2"
+        android:pathData="M54,54 L0,54 A54,54 0 0 1 54,0 Z" />
+    <group
+        android:scaleX="0.45"
+        android:scaleY="0.45"
+        android:translateX="7.7"
+        android:translateY="7.7">
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M36,32 L62,54 L36,76 Z" />
+        <path
+            android:fillColor="#201A1B"
+            android:pathData="M67,34 h2 a5,5 0 0 1 5,5 v30 a5,5 0 0 1 -5,5 h-2 a5,5 0 0 1 -5,-5 v-30 a5,5 0 0 1 5,-5 z" />
+    </group>
+</vector>

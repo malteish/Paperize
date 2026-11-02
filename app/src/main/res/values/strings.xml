@@ -257,4 +257,11 @@
   <string name="change_folder">Change</string>
   <string name="clear_folder">Clear</string>
 
+  <!-- Open-image widget and the four-button widgets -->
+  <string name="widget_open_image_label">Open wallpaper image</string>
+  <string name="widget_open_image_description">Tap to open the current wallpaper in your gallery app</string>
+  <string name="widget_controls_grid_label">Paperize controls (grid)</string>
+  <string name="widget_controls_grid_description">Change, pause/resume, copy-to-premium and open-image buttons in a 2x2 grid</string>
+  <string name="widget_controls_circle_label">Paperize controls (circle)</string>
+  <string name="widget_controls_circle_description">Change, pause/resume, copy-to-premium and open-image buttons as the quarters of a circle</string>
 </resources>
